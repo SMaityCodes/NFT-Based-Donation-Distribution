@@ -23,6 +23,17 @@ const CampaignDetailsMUI = ({ campaigns = [] }) => {
       const campaign = await contract.campaigns(parseInt(campaignId));
       const balance = await contract.getCampaignBalance(parseInt(campaignId));
       
+      // Get the number of minted NFTs for this campaign
+      let mintedNfts = 0;
+      try {
+        const students = await contract.getStudentsByCampaign(parseInt(campaignId));
+        // Count students that have an NFT (nftId > 0)
+        mintedNfts = students.filter(student => student.nftId > 0).length;
+      } catch (err) {
+        console.error("Error fetching minted NFTs:", err);
+        mintedNfts = 0;
+      }
+      
       // Format the campaign data
       const formattedCampaign = {
         id: campaign.id.toString(),
@@ -31,7 +42,7 @@ const CampaignDetailsMUI = ({ campaigns = [] }) => {
         balance: ethers.formatEther(balance),
         allowedSchoolTypes: campaign.allowedSchoolTypes || [],
         allowedStandards: campaign.allowedStandards || [],
-        mintedNfts: "N/A" // Placeholder until contract function is implemented
+        mintedNfts: mintedNfts.toString()
       };
 
       setSelectedCampaignDetails(formattedCampaign);
@@ -95,15 +106,21 @@ const CampaignDetailsMUI = ({ campaigns = [] }) => {
               <Typography><strong>Status:</strong> {selectedCampaignDetails.exists ? 'Active' : 'Inactive'}</Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <Typography><strong>Current Balance:</strong> <Chip label={`${selectedCampaignDetails.balance} ETH`} color="success" size="small" /></Typography>
+              <Typography component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+                <strong>Current Balance:</strong> <Chip label={`${selectedCampaignDetails.balance} ETH`} color="success" size="small" />
+              </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <Typography><strong>NFTs Minted:</strong> <Chip label={selectedCampaignDetails.mintedNfts} color="info" size="small" /></Typography>
+              <Typography component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+                <strong>NFTs Minted:</strong> <Chip label={selectedCampaignDetails.mintedNfts} color="info" size="small" />
+              </Typography>
             </Grid>
             {selectedCampaignDetails.allowedSchoolTypes && selectedCampaignDetails.allowedSchoolTypes.length > 0 && (
               <Grid item xs={12}>
-                <Typography><strong>Allowed School Types:</strong></Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                <Typography component="span" sx={{ display: 'block', mb: 1 }}>
+                  <strong>Allowed School Types:</strong>
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {selectedCampaignDetails.allowedSchoolTypes.map((type, idx) => (
                     <Chip key={idx} label={type} size="small" />
                   ))}
@@ -112,8 +129,10 @@ const CampaignDetailsMUI = ({ campaigns = [] }) => {
             )}
             {selectedCampaignDetails.allowedStandards && selectedCampaignDetails.allowedStandards.length > 0 && (
               <Grid item xs={12}>
-                <Typography><strong>Allowed Standards:</strong></Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                <Typography component="span" sx={{ display: 'block', mb: 1 }}>
+                  <strong>Allowed Standards:</strong>
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {selectedCampaignDetails.allowedStandards.map((s, idx) => (
                     <Chip key={idx} label={STANDARDS[s] || `Standard ${s}`} size="small" />
                   ))}

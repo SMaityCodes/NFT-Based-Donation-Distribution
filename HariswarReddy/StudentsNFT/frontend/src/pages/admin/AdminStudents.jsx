@@ -84,12 +84,22 @@ const AdminStudents = () => {
 
       for (let i = 0; i < studentCount; i++) {
         const student = await contract.students(i);
+        // Check if student is approved by checking nftId
+        const isApproved = student.nftId > 0;
+        console.log('Student data:', {
+          id: i,
+          address: student.studentAddress,
+          nftId: student.nftId.toString(),
+          isApproved
+        });
+
         studentsData.push({
           id: i.toString(),
           address: student.studentAddress,
           schoolType: student.schoolType === 0 ? 'Government' : 'Private',
           standard: student.standard.toString(),
-          approved: student.approved
+          approved: isApproved,
+          nftId: student.nftId.toString()
         });
       }
 
@@ -179,6 +189,20 @@ const AdminStudents = () => {
     } catch (error) {
       console.error('Error deleting student:', error);
       toast.error('Failed to delete student');
+    }
+  };
+
+  const handleApproveStudent = async (student) => {
+    if (!contract || !account) return;
+
+    try {
+      const tx = await contract.approveStudent(student.id);
+      await tx.wait();
+      toast.success('Student approved successfully');
+      fetchStudents(); // Refresh the student list
+    } catch (error) {
+      console.error('Error approving student:', error);
+      toast.error('Failed to approve student');
     }
   };
 
@@ -279,91 +303,88 @@ const AdminStudents = () => {
           </Grid>
         ) : (
           students.map((student) => (
-            <Grid item xs={12} md={6} lg={4} key={student.id}>
-              <Card 
-                elevation={2}
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 4
-                  }
-                }}
-              >
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                    <Typography variant="h6" component="div" gutterBottom>
-                      Student #{student.id}
+            <Paper 
+              key={student.id} 
+              elevation={1} 
+              sx={{ 
+                mb: 2,
+                p: 2,
+                '&:hover': {
+                  boxShadow: 3
+                }
+              }}
+            >
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={12} sm={4}>
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    {student.address}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    ID: {student.id}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <SchoolIcon color="primary" fontSize="small" />
+                    <Typography variant="body2">
+                      {student.schoolType} - Standard {student.standard}
                     </Typography>
-                    <Stack direction="row" spacing={1}>
-                      <Tooltip title="Edit Student">
-                        <IconButton 
-                          size="small" 
-                          onClick={() => handleEditClick(student)}
-                          sx={{ color: 'primary.main' }}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete Student">
-                        <IconButton 
-                          size="small" 
-                          onClick={() => handleDeleteClick(student)}
-                          sx={{ color: 'error.main' }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
                   </Stack>
-                  <Stack spacing={2}>
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                        Address
-                      </Typography>
-                      <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>
-                        {student.address}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                        School Type
-                      </Typography>
-                      <Chip
-                        label={student.schoolType}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                      />
-                    </Box>
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                        Standard
-                      </Typography>
-                      <Chip
-                        label={`Standard ${student.standard}`}
-                        size="small"
-                        color="secondary"
-                        variant="outlined"
-                      />
-                    </Box>
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                        Status
-                      </Typography>
-                      <Chip
-                        label={student.approved ? 'Approved' : 'Pending'}
-                        color={student.approved ? 'success' : 'warning'}
-                        size="small"
-                      />
-                    </Box>
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    {student.approved ? (
+                      <>
+                        <CheckCircleIcon color="success" fontSize="small" />
+                        <Typography variant="body2" color="success.main">
+                          Approved
+                        </Typography>
+                        <Chip 
+                          label={`NFT #${student.nftId}`} 
+                          color="success" 
+                          size="small" 
+                          variant="outlined"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <PendingIcon color="warning" fontSize="small" />
+                        <Typography variant="body2" color="warning.main">
+                          Pending
+                        </Typography>
+                      </>
+                    )}
                   </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
+                </Grid>
+                <Grid item xs={12} sm={2}>
+                  <Stack direction="row" spacing={1} justifyContent="flex-end">
+                    {!student.approved && (
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleApproveStudent(student)}
+                        color="success"
+                      >
+                        <CheckCircleIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleEditClick(student)}
+                      disabled={student.approved}
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleDeleteClick(student)}
+                      disabled={student.approved}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Stack>
+                </Grid>
+              </Grid>
+            </Paper>
           ))
         )}
       </Grid>

@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Typography, Button, TextField, Select, MenuItem,
-  CircularProgress, Paper, Link, Chip, Alert, Stack, FormControl, InputLabel
+  Box, Typography, Button, Select, MenuItem,
+  CircularProgress, Paper, Link, Chip, Stack, FormControl, InputLabel, FormHelperText
 } from '@mui/material';
 import useWeb3Store from '../store/web3Store';
 import { STANDARDS } from '../utils/constants';
 import { uploadFileToIPFS, getIPFSGatewayUrl } from '../utils/ipfs';
 import { toast } from 'react-hot-toast';
-import { ethers } from 'ethers'; // Added ethers import for ZeroAddress check
+import { ethers, id } from 'ethers';
 import { useNavigate } from 'react-router-dom';
+import { Upload } from '@mui/icons-material';
+import axios from 'axios';
+
+const BACKEND_URL = 'http://localhost:3001';
 
 const RegisterStudentMUI = () => {
   const { contract, isConnected, signer, account, getReadOnlyContract } = useWeb3Store();
@@ -16,14 +20,12 @@ const RegisterStudentMUI = () => {
   const [selectedCampaignId, setSelectedCampaignId] = useState('');
   const [schoolType, setSchoolType] = useState('');
   const [standard, setStandard] = useState('');
-  const [admissionLetterFile, setAdmissionLetterFile] = useState(null);
-  const [admissionLetterHash, setAdmissionLetterHash] = useState(''); // Stores bytes32 hash
-  const [ipfsCid, setIpfsCid] = useState(''); // Stores IPFS CID for viewing
+  const [admissionLetterId, setAdmissionLetterId] = useState('');
   const [loadingCampaigns, setLoadingCampaigns] = useState(true);
   const [isRegistering, setIsRegistering] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
-  const [currentStudentStatus, setCurrentStudentStatus] = useState(null); // To check if student is already registered
-  const [errors, setErrors] = useState({}); // Simple error state for form fields
+  const [currentStudentStatus, setCurrentStudentStatus] = useState(null);
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
   const fetchCampaigns = async () => {
@@ -35,30 +37,76 @@ const RegisterStudentMUI = () => {
         setLoadingCampaigns(false);
         return;
       }
+
+      console.log("Fetching campaigns from contract...");
       const fetchedCampaigns = await contractInstance.getAllCampaigns();
-      setCampaigns(fetchedCampaigns);
+      console.log("Raw campaigns data:", fetchedCampaigns);
+
+      // Ensure we have an array of campaigns
+      if (!Array.isArray(fetchedCampaigns)) {
+        console.error("Campaigns data is not an array:", fetchedCampaigns);
+        toast.error("Failed to load campaigns: Invalid data format");
+        setLoadingCampaigns(false);
+        return;
+      }
+
+      // Filter and map campaigns to ensure all required fields
+      const validCampaigns = fetchedCampaigns
+        .filter(campaign => {
+          const isValid = campaign && 
+            campaign.id !== undefined && 
+            campaign.name && 
+            campaign.exists;
+          
+          if (!isValid) {
+            console.warn("Invalid campaign data:", campaign);
+          }
+          return isValid;
+        })
+        .map(campaign => ({
+          id: campaign.id.toString(),
+          name: campaign.name,
+          allowedSchoolTypes: campaign.allowedSchoolTypes || [],
+          allowedStandards: campaign.allowedStandards || [],
+          exists: campaign.exists
+        }));
+
+      console.log("Processed valid campaigns:", validCampaigns);
+      
+      if (validCampaigns.length === 0) {
+        toast.warning("No active campaigns available at the moment.");
+      }
+
+      setCampaigns(validCampaigns);
     } catch (err) {
       console.error("Failed to fetch campaigns:", err);
-      toast.error("Failed to load campaigns.");
+      toast.error(`Failed to load campaigns: ${err.message}`);
     } finally {
       setLoadingCampaigns(false);
+    }
+  };
+
+  const formatCampaignAmount = (amount) => {
+    try {
+      if (!amount) return '0 ETH';
+      return `${ethers.formatEther(amount)} ETH`;
+    } catch (error) {
+      console.error('Error formatting campaign amount:', error);
+      return '0 ETH';
     }
   };
 
   const checkStudentRegistration = async () => {
     if (account && contract) {
       try {
-        const studentInfo = await contract.students(account); // Assuming students mapping is by address
-        // The contract's `students` mapping is by `uint studentCount`, not address.
-        // To check if `msg.sender` (current account) is registered, you need `isStudentRegistered` mapping.
         const registeredStatus = await contract.isStudentRegistered(account);
         setCurrentStudentStatus(registeredStatus);
       } catch (err) {
         console.error("Error checking student registration:", err);
-        setCurrentStudentStatus(false); // Assume not registered on error
+        setCurrentStudentStatus(false);
       }
     } else {
-        setCurrentStudentStatus(false); // Not connected, so not registered via current wallet
+      setCurrentStudentStatus(false);
     }
   };
 
@@ -67,13 +115,12 @@ const RegisterStudentMUI = () => {
   }, [contract, getReadOnlyContract]);
 
   useEffect(() => {
-    // Only check student status if connected
     if (isConnected) {
-        checkStudentRegistration();
+      checkStudentRegistration();
     } else {
-        setCurrentStudentStatus(false); // Reset status if disconnected
+      setCurrentStudentStatus(false);
     }
-  }, [isConnected, account, contract]); // Re-run if connection status or account changes
+  }, [isConnected, account, contract]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -84,108 +131,164 @@ const RegisterStudentMUI = () => {
     } else if (name === 'standard') {
       setStandard(value);
     }
+    // Clear error when field is edited
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: undefined
+      }));
+    }
   };
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Check file size (5MB limit)
-      if (file.size > 5 * 1024 * 1024) {
-        setErrors((prev) => ({ ...prev, admissionLetter: 'File size should be less than 5MB' }));
-        return;
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      setErrors(prev => ({
+        ...prev,
+        admissionLetter: 'Please upload a PDF, JPG, JPEG, or PNG file'
+      }));
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      setErrors(prev => ({
+        ...prev,
+        admissionLetter: 'File size should be less than 5MB'
+      }));
+      return;
+    }
+
+    setUploadingFile(true);
+    setErrors(prev => ({ ...prev, admissionLetter: '' }));
+
+    try {
+      // Get the token from localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Please connect your wallet first');
       }
-      // Check file type
-      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-      if (!allowedTypes.includes(file.type)) {
-        setErrors((prev) => ({ ...prev, admissionLetter: 'Only PDF, JPG, JPEG, and PNG files are allowed' }));
-        return;
+
+      const formData = new FormData();
+      formData.append('admissionLetter', file);
+      formData.append('studentId', account);
+      formData.append('campaignId', selectedCampaignId);
+
+      console.log('Uploading to:', `${BACKEND_URL}/api/admission-letters/upload`);
+      console.log('FormData contents:', {
+        studentId: account,
+        campaignId: selectedCampaignId,
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size
+      });
+      
+      const response = await fetch(`${BACKEND_URL}/api/admission-letters/upload`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Upload failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData
+        });
+        if (response.status === 401) {
+          throw new Error('Please connect your wallet first');
+        }
+        throw new Error(errorData.message || 'Failed to upload admission letter');
       }
-      setAdmissionLetterFile(file);
-      setUploadingFile(true);
-      setErrors((prev) => ({ ...prev, admissionLetter: undefined }));
-      try {
-        const { cid, sha256Hash } = await uploadFileToIPFS(file);
-        setIpfsCid(cid);
-        setAdmissionLetterHash(sha256Hash);
-        toast.success("Admission letter uploaded to IPFS!");
-      } catch (err) {
-        console.error("Error uploading file:", err);
-        toast.error("Failed to upload admission letter to IPFS.");
-        setAdmissionLetterFile(null);
-        setAdmissionLetterHash('');
-        setIpfsCid('');
-        setErrors((prev) => ({ ...prev, admissionLetter: "Failed to upload file." }));
-      } finally {
-        setUploadingFile(false);
-      }
+
+      const data = await response.json();
+      setAdmissionLetterId(data._id);
+      toast.success('Admission letter uploaded successfully');
+    } catch (err) {
+      console.error('Error uploading admission letter:', err);
+      setErrors(prev => ({
+        ...prev,
+        admissionLetter: err.message || 'Failed to upload admission letter. Please try again.'
+      }));
+      toast.error(err.message || 'Failed to upload admission letter');
+    } finally {
+      setUploadingFile(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const newErrors = {};
-
-    if (!isConnected || !signer || !contract) {
-      toast.error("Please connect your wallet.");
-      return;
-    }
-    if (!selectedCampaignId) {
-      newErrors.campaignId = "Please select a campaign.";
-    }
-    if (!schoolType) {
-      newErrors.schoolType = "School type is required.";
-    }
-    if (standard === '') { // Standard is 0-indexed enum
-      newErrors.standard = "Standard is required.";
-    }
-    if (!admissionLetterHash) {
-      newErrors.admissionLetter = "Admission letter upload is required.";
-    }
-
-    const campaign = campaigns.find(c => c.id.toString() === selectedCampaignId);
-    if (campaign) {
-      const isSchoolTypeAllowed = campaign.allowedSchoolTypes.some(type => type.toLowerCase() === schoolType.toLowerCase());
-      if (!isSchoolTypeAllowed) {
-        newErrors.schoolType = `School type '${schoolType}' is not allowed for this campaign.`;
-      }
-
-      const isStandardAllowed = campaign.allowedStandards.some(s => s.toString() === standard);
-      if (!isStandardAllowed) {
-        newErrors.standard = `Standard '${STANDARDS[standard]}' is not allowed for this campaign.`;
-      }
-    } else if (selectedCampaignId) {
-        newErrors.campaignId = "Selected campaign not found.";
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    if (!account) {
+      setErrors(prev => ({
+        ...prev,
+        campaignId: 'Please connect your wallet first'
+      }));
       return;
     }
 
-    setErrors({});
-    setIsRegistering(true);
     try {
-      const tx = await contract.registerForCampaign(
-        parseInt(selectedCampaignId),
+      setIsRegistering(true);
+      setErrors({});
+
+      // Validate form data
+      if (!selectedCampaignId || !schoolType || !standard) {
+        setErrors(prev => ({
+          ...prev,
+          campaignId: 'Please select a campaign',
+          schoolType: 'School type is required',
+          standard: 'Standard is required'
+        }));
+        setIsRegistering(false);
+        return;
+      }
+
+      // Validate admission letter
+      if (!admissionLetterId) {
+        setErrors(prev => ({
+          ...prev,
+          admissionLetter: 'Please upload an admission letter'
+        }));
+        setIsRegistering(false);
+        return;
+      }
+
+      const contractInstance = contract || getReadOnlyContract();
+      if (!contractInstance) {
+        throw new Error("Contract not loaded. Please connect your wallet or ensure RPC URL is set.");
+      }
+
+      const tx = await contractInstance.registerForCampaign(
+        selectedCampaignId,
         schoolType,
-        parseInt(standard),
-        admissionLetterHash
+        standard,
+        id(admissionLetterId)
       );
-      toast.loading("Transaction pending...", { id: 'registerTx' });
-      await tx.wait();
-      toast.success("Student registered successfully!", { id: 'registerTx' });
-      // Reset form
-      setSelectedCampaignId('');
-      setSchoolType('');
-      setStandard('');
-      setAdmissionLetterFile(null);
-      setAdmissionLetterHash('');
-      setIpfsCid('');
-      checkStudentRegistration(); // Re-check status after successful registration
-      navigate('/student/profile');
+
+      toast.info('Transaction submitted. Waiting for confirmation...');
+      const receipt = await tx.wait();
+      
+      if (receipt.status === 1) {
+        toast.success('Student registered successfully!');
+        // Reset form
+        setSelectedCampaignId('');
+        setSchoolType('');
+        setStandard('');
+        setAdmissionLetterId('');
+        checkStudentRegistration();
+        navigate('/student/profile');
+      } else {
+        throw new Error('Transaction failed');
+      }
     } catch (err) {
-      console.error("Registration failed:", err);
-      toast.error(`Registration failed: ${err.reason || err.message}`, { id: 'registerTx' });
+      console.error('Registration error:', err);
+      toast.error(err.message || 'Failed to register student');
     } finally {
       setIsRegistering(false);
     }
@@ -210,13 +313,12 @@ const RegisterStudentMUI = () => {
     );
   }
 
-  // After connection, if currentStudentStatus is still null, it means check is pending
   if (currentStudentStatus === null) {
     return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
-            <CircularProgress size={50} />
-            <Typography sx={{ ml: 2 }}>Checking student registration status...</Typography>
-        </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+        <CircularProgress size={50} />
+        <Typography sx={{ ml: 2 }}>Checking student registration status...</Typography>
+      </Box>
     );
   }
 
@@ -238,7 +340,36 @@ const RegisterStudentMUI = () => {
       </Typography>
       <Paper sx={{ p: 3, maxWidth: '600px', mx: 'auto' }}>
         <Stack component="form" onSubmit={handleSubmit} spacing={3}>
-          <FormControl fullWidth>
+          <FormControl fullWidth error={!!errors.campaignId}>
+            <InputLabel>Select Campaign</InputLabel>
+            <Select
+              name="campaignId"
+              value={selectedCampaignId}
+              onChange={handleInputChange}
+              label="Select Campaign"
+              required
+            >
+              {campaigns.length === 0 ? (
+                <MenuItem disabled>
+                  No campaigns available
+                </MenuItem>
+              ) : (
+                campaigns.map((campaign) => (
+                  <MenuItem key={campaign.id} value={campaign.id}>
+                    {campaign.name}
+                  </MenuItem>
+                ))
+              )}
+            </Select>
+            {errors.campaignId && <FormHelperText>{errors.campaignId}</FormHelperText>}
+            {campaigns.length === 0 && (
+              <FormHelperText>
+                There are no active campaigns at the moment. Please check back later.
+              </FormHelperText>
+            )}
+          </FormControl>
+
+          <FormControl fullWidth error={!!errors.schoolType}>
             <InputLabel>School Type</InputLabel>
             <Select
               name="schoolType"
@@ -251,9 +382,10 @@ const RegisterStudentMUI = () => {
               <MenuItem value="Private">Private</MenuItem>
               <MenuItem value="International">International</MenuItem>
             </Select>
+            {errors.schoolType && <FormHelperText>{errors.schoolType}</FormHelperText>}
           </FormControl>
 
-          <FormControl fullWidth>
+          <FormControl fullWidth error={!!errors.standard}>
             <InputLabel>Standard</InputLabel>
             <Select
               name="standard"
@@ -268,21 +400,13 @@ const RegisterStudentMUI = () => {
                 </MenuItem>
               ))}
             </Select>
+            {errors.standard && <FormHelperText>{errors.standard}</FormHelperText>}
           </FormControl>
 
-          <TextField
-            name="campaignId"
-            label="Campaign ID"
-            type="number"
-            value={selectedCampaignId}
-            onChange={(e) => setSelectedCampaignId(e.target.value)}
-            error={!!errors.campaignId}
-            helperText={errors.campaignId}
-            required
-            fullWidth
-          />
-
           <Box>
+            <Typography variant="subtitle1" gutterBottom>
+              Upload Admission Letter
+            </Typography>
             <input
               accept=".pdf,.jpg,.jpeg,.png"
               style={{ display: 'none' }}
@@ -294,49 +418,50 @@ const RegisterStudentMUI = () => {
               <Button
                 variant="outlined"
                 component="span"
-                fullWidth
-                sx={{ mb: 1 }}
+                startIcon={<Upload />}
+                disabled={uploadingFile}
               >
-                Upload Admission Letter
+                {uploadingFile ? 'Uploading...' : 'Upload Admission Letter'}
               </Button>
             </label>
-            {uploadingFile && (
-              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                <CircularProgress size={20} sx={{ mr: 1 }} />
-                <Typography variant="body2" color="primary">Uploading file to IPFS...</Typography>
-              </Box>
-            )}
-            {ipfsCid && (
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                File uploaded! View on IPFS:{' '}
-                <Link href={getIPFSGatewayUrl(ipfsCid)} target="_blank" rel="noopener" color="primary">
-                  {ipfsCid.substring(0, 10)}...{ipfsCid.substring(ipfsCid.length - 10)}
-                </Link>
+            {errors.admissionLetter && (
+              <Typography color="error" variant="caption" display="block">
+                {errors.admissionLetter}
               </Typography>
+            )}
+            {admissionLetterId && (
+              <Box mt={1}>
+                <Chip
+                  label="File uploaded successfully"
+                  color="success"
+                  size="small"
+                />
+                <Link
+                  href={`${BACKEND_URL}/api/admission-letters/${account}/download`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ ml: 1 }}
+                >
+                  View File
+                </Link>
+              </Box>
             )}
           </Box>
 
           <Button
+            type="submit"
             variant="contained"
             color="primary"
-            type="submit"
-            disabled={isRegistering || uploadingFile || !admissionLetterHash}
-            startIcon={isRegistering && <CircularProgress size={20} color="inherit" />}
-            fullWidth
+            size="large"
+            disabled={isRegistering || uploadingFile}
+            startIcon={isRegistering ? <CircularProgress size={20} /> : null}
           >
-            Register
+            {isRegistering ? 'Registering...' : 'Register Student'}
           </Button>
         </Stack>
       </Paper>
     </Box>
   );
 };
-
-// Helper for VStack like Chakra UI
-const VStack = ({ children, spacing, ...props }) => (
-  <Box display="flex" flexDirection="column" gap={spacing * 8} {...props}>
-    {children}
-  </Box>
-);
 
 export default RegisterStudentMUI;

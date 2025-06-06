@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, Button, TextField, Select, MenuItem, Grid, Paper,
-  CircularProgress, Tabs, Tab, Divider, List, ListItem, ListItemText, Chip, Link
+  CircularProgress, Tabs, Tab, Divider, List, ListItem, ListItemText, Chip, Link,
+  Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
 import useWeb3Store from '../store/web3Store';
 import { STANDARDS } from '../utils/constants';
@@ -9,9 +10,11 @@ import { toast } from 'react-hot-toast';
 import { ethers } from 'ethers';
 import CampaignDetailsMUI from '../components/CampaignDetailsMUI'; // Re-use the separate component
 import { getIPFSGatewayUrl } from '../utils/ipfs';
+import { useAuth } from '../context/AuthContext';
 
 const AdminDashboardMUI = () => {
   const { contract, account, isConnected, isOwner, signer } = useWeb3Store();
+  const { token } = useAuth();
   const [tabIndex, setTabIndex] = useState(0);
 
   // Campaign Creation States
@@ -35,6 +38,11 @@ const AdminDashboardMUI = () => {
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [loadingApprovedStudents, setLoadingApprovedStudents] = useState(false);
   const [allDonorsWithAmounts, setAllDonorsWithAmounts] = useState([]);
+  const [donationAmount, setDonationAmount] = useState('');
+  const [selectedCampaignForDonation, setSelectedCampaignForDonation] = useState(null);
+  const [openDonationDialog, setOpenDonationDialog] = useState(false);
+  const [donating, setDonating] = useState(false);
+  const [approvingStudent, setApprovingStudent] = useState(false);
 
   const fetchData = async () => {
     if (!contract || !isOwner) {
@@ -72,14 +80,98 @@ const AdminDashboardMUI = () => {
   };
 
   const fetchStudentsForCampaign = async (campaignId) => {
-    if (!contract || !campaignId) return;
+    if (!contract || !campaignId) {
+      setRegisteredStudents([]);
+      return;
+    }
+
     setLoadingStudents(true);
     try {
-      const students = await contract.getStudentsByCampaign(campaignId);
-      setRegisteredStudents(students);
+      console.log('Fetching students for campaign:', campaignId);
+      const campaignIdNum = parseInt(campaignId);
+      
+      // Get all students for the campaign
+      const students = await contract.getStudentsByCampaign(campaignIdNum);
+      console.log('Raw students data:', students);
+
+      // Get the auth token
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.warn('No authentication token found');
+      }
+
+      // Process each student
+      const processedStudents = await Promise.all(students.map(async (student, index) => {
+        try {
+          // Get the student's global ID
+          const studentId = await contract.studentIdsByCampaign(campaignIdNum, index);
+          console.log(`Processing student ${index}:`, {
+            address: student[0],
+            studentId: studentId.toString()
+          });
+
+          // Get the student's data
+          const studentData = await contract.students(studentId);
+          console.log('Student data:', studentData);
+
+          // Check if student is approved by checking nftId
+          const isApproved = studentData.nftId > 0;
+          console.log('Student approval status:', {
+            address: student[0],
+            nftId: studentData.nftId.toString(),
+            isApproved
+          });
+
+          // Try to fetch admission letter
+          let admissionLetter = null;
+          try {
+            const response = await fetch(
+              `http://localhost:3001/api/admission-letters/${student[0].toLowerCase()}`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+            if (response.ok) {
+              admissionLetter = await response.json();
+            } else {
+              console.warn(`Failed to fetch admission letter for student ${student[0]}:`, response.status);
+            }
+          } catch (err) {
+            console.error('Error fetching admission letter:', err);
+          }
+
+          return {
+            studentAddress: student[0],
+            schoolType: student[1],
+            standard: student[2],
+            admissionLetterHash: student[3],
+            approved: isApproved,
+            nftId: studentData.nftId,
+            campaignId: studentData.campaignId,
+            admissionLetterStatus: admissionLetter ? 'Uploaded' : 'Not uploaded',
+            fileUrl: admissionLetter?.fileUrl
+          };
+        } catch (err) {
+          console.error(`Error processing student ${index}:`, err);
+          return null;
+        }
+      }));
+
+      // Filter out any null entries
+      const validStudents = processedStudents.filter(student => student !== null);
+      console.log('Processed students:', validStudents);
+
+      // Update both registered and approved students lists
+      setRegisteredStudents(validStudents.filter(student => !student.approved));
+      setApprovedStudents(validStudents.filter(student => student.approved));
     } catch (err) {
-      console.error("Failed to fetch registered students:", err);
-      toast.error(`Failed to fetch registered students: ${err.reason || err.message}`);
+      console.error("Failed to fetch students:", err);
+      toast.error(`Failed to fetch students: ${err.reason || err.message}`);
+      setRegisteredStudents([]);
+      setApprovedStudents([]);
     } finally {
       setLoadingStudents(false);
     }
@@ -196,23 +288,105 @@ const AdminDashboardMUI = () => {
     }
   };
 
-  const handleApproveStudent = async (studentId) => {
-    if (!contract || !isOwner) {
-      toast.error("You are not authorized or wallet not connected.");
+  const handleApproveStudent = async (studentAddress) => {
+    if (!contract || !isConnected || !isOwner) {
+      toast.error("Please connect your wallet and ensure you're authorized");
       return;
     }
 
+    setApprovingStudent(true);
     try {
+      console.log('Approving student address:', studentAddress);
+      
+      // Get students for the current campaign
+      const campaignId = parseInt(selectedCampaignForStudents);
+      console.log('Campaign ID:', campaignId);
+      
+      const students = await contract.getStudentsByCampaign(campaignId);
+      console.log('Campaign students:', students);
+
+      // Find the student's index in the campaign
+      let studentId = null;
+      for (let i = 0; i < students.length; i++) {
+        const student = students[i];
+        console.log(`Checking student ${i}:`, {
+          address: student[0],
+          targetAddress: studentAddress,
+          match: student[0].toLowerCase() === studentAddress.toLowerCase()
+        });
+        
+        if (student[0].toLowerCase() === studentAddress.toLowerCase()) {
+          // Get the student's global ID
+          studentId = await contract.studentIdsByCampaign(campaignId, i);
+          break;
+        }
+      }
+
+      if (studentId === null) {
+        throw new Error(`Student not found with address: ${studentAddress} in campaign ${campaignId}`);
+      }
+
+      console.log('Found student ID:', studentId.toString());
+
+      // Get the student data to verify
+      const studentData = await contract.students(studentId);
+      console.log('Student data:', {
+        address: studentData.studentAddress,
+        schoolType: studentData.schoolType,
+        standard: studentData.standard,
+        approved: studentData.approved
+      });
+
+      // Approve the student using their ID
       const tx = await contract.approveStudent(studentId);
-      toast.loading("Approving student...", { id: 'approveStudentTx' });
-      await tx.wait();
-      toast.success("Student approved and NFT minted!", { id: 'approveStudentTx' });
-      fetchStudentsForCampaign(parseInt(selectedCampaignForStudents));
-      fetchApprovedStudentsForCampaign(parseInt(selectedCampaignForStudents));
-      fetchData();
+      console.log('Transaction sent:', tx.hash);
+      
+      // Wait for transaction to be mined
+      const receipt = await tx.wait();
+      console.log('Transaction receipt:', receipt);
+
+      if (receipt.status === 1) {
+        toast.success("Student approved successfully!");
+        
+        // Refresh both registered and approved students lists
+        if (selectedCampaignForStudents) {
+          await Promise.all([
+            fetchStudentsForCampaign(selectedCampaignForStudents),
+            fetchApprovedStudentsForCampaign(selectedCampaignForStudents)
+          ]);
+        }
+      } else {
+        throw new Error("Transaction failed");
+      }
     } catch (err) {
       console.error("Approve student failed:", err);
-      toast.error(`Approve student failed: ${err.reason || err.message}`, { id: 'approveStudentTx' });
+      toast.error(`Failed to approve student: ${err.reason || err.message}`);
+    } finally {
+      setApprovingStudent(false);
+    }
+  };
+
+  const handleDonate = async () => {
+    if (!contract || !selectedCampaignForDonation || !donationAmount) return;
+
+    try {
+      setDonating(true);
+      const amount = ethers.parseEther(donationAmount);
+      
+      const tx = await contract.donateToCampaign(selectedCampaignForDonation.id, { value: amount });
+      toast.loading('Processing donation...', { id: 'donationTx' });
+      
+      await tx.wait();
+      
+      toast.success('Donation successful!', { id: 'donationTx' });
+      setOpenDonationDialog(false);
+      setDonationAmount('');
+      fetchData(); // Refresh campaign data
+    } catch (err) {
+      console.error('Donation error:', err);
+      toast.error(`Donation failed: ${err.reason || err.message}`, { id: 'donationTx' });
+    } finally {
+      setDonating(false);
     }
   };
 
@@ -330,6 +504,18 @@ const AdminDashboardMUI = () => {
                     <Typography variant="body2">Allowed Types: {campaign.allowedSchoolTypes.join(', ')}</Typography>
                     <Typography variant="body2">Allowed Standards: {campaign.allowedStandards.map(s => STANDARDS[s]).join(', ')}</Typography>
                     <Typography variant="body2">Exists: {campaign.exists ? 'Yes' : 'No'}</Typography>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="small"
+                      sx={{ mt: 2 }}
+                      onClick={() => {
+                        setSelectedCampaignForDonation(campaign);
+                        setOpenDonationDialog(true);
+                      }}
+                    >
+                      Donate to Campaign
+                    </Button>
                   </Paper>
                 </Grid>
               ))}
@@ -339,6 +525,36 @@ const AdminDashboardMUI = () => {
           <Divider sx={{ my: 4 }} />
 
           <CampaignDetailsMUI campaigns={campaigns} />
+
+          {/* Donation Dialog */}
+          <Dialog open={openDonationDialog} onClose={() => setOpenDonationDialog(false)}>
+            <DialogTitle>Donate to Campaign</DialogTitle>
+            <DialogContent>
+              <Typography variant="body1" gutterBottom>
+                Campaign: {selectedCampaignForDonation?.name}
+              </Typography>
+              <TextField
+                autoFocus
+                margin="dense"
+                label="Amount (ETH)"
+                type="number"
+                fullWidth
+                value={donationAmount}
+                onChange={(e) => setDonationAmount(e.target.value)}
+                inputProps={{ step: "0.01", min: "0" }}
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setOpenDonationDialog(false)}>Cancel</Button>
+              <Button 
+                onClick={handleDonate}
+                variant="contained" 
+                disabled={!donationAmount || donating}
+              >
+                {donating ? <CircularProgress size={24} /> : 'Donate'}
+              </Button>
+            </DialogActions>
+          </Dialog>
         </Box>
       )}
 
@@ -373,19 +589,18 @@ const AdminDashboardMUI = () => {
               ) : (
                 <List>
                   {registeredStudents.filter(s => !s.approved).map((student, index) => (
-                    <Paper component={ListItem} key={student.id.toString()} elevation={1} sx={{ mb: 2 }}>
+                    <Paper component={ListItem} key={index} elevation={1} sx={{ mb: 2 }}>
                       <ListItemText
-                        primary={`Address: ${student.studentAddress}`}
+                        primary={`Address: ${student.studentAddress || 'N/A'}`}
                         secondary={
                           <>
                             <Typography component="span" variant="body2" color="text.primary">
-                              School Type: {student.schoolType} <br/>
-                              Standard: {STANDARDS[student.standard]} <br/>
-                              Campaign ID: {student.campaignId.toString()} <br/>
-                              Admission Letter Hash: { ' ' }
-                              <Link href={getIPFSGatewayUrl(ethers.toUtf8String(student.admissionLetterHash))} target="_blank" rel="noopener" color="primary">
-                                {ethers.toUtf8String(student.admissionLetterHash).substring(0, 10)}...
-                              </Link>
+                              School Type: {student.schoolType || 'N/A'} <br/>
+                              Standard: {student.standard !== undefined ? STANDARDS[student.standard] : 'N/A'} <br/>
+                              Campaign ID: {student.campaignId ? student.campaignId.toString() : 'N/A'} <br/>
+                              NFT ID: {student.nftId ? student.nftId.toString() : 'Not minted'} <br/>
+                              Admission Letter Status: {student.admissionLetterStatus || 'Not uploaded'} <br/>
+                              {student.fileUrl && `Admission Letter: ${student.fileUrl}`}
                             </Typography>
                           </>
                         }
@@ -394,9 +609,17 @@ const AdminDashboardMUI = () => {
                         variant="contained"
                         color="success"
                         size="small"
-                        onClick={() => handleApproveStudent(student.id)}
+                        onClick={() => handleApproveStudent(student.studentAddress)}
+                        disabled={approvingStudent}
                       >
-                        Approve & Mint NFT
+                        {approvingStudent ? (
+                          <>
+                            <CircularProgress size={20} sx={{ mr: 1 }} />
+                            Approving...
+                          </>
+                        ) : (
+                          'Approve & Mint NFT'
+                        )}
                       </Button>
                     </Paper>
                   ))}
@@ -411,14 +634,16 @@ const AdminDashboardMUI = () => {
               ) : (
                 <List>
                   {approvedStudents.map((student, index) => (
-                    <Paper component={ListItem} key={student.id.toString()} elevation={1} sx={{ mb: 2 }}>
+                    <Paper component={ListItem} key={index} elevation={1} sx={{ mb: 2 }}>
                       <ListItemText
-                        primary={`Address: ${student.studentAddress}`}
+                        primary={`Address: ${student.studentAddress || 'N/A'}`}
                         secondary={
                           <>
                             <Typography component="span" variant="body2" color="text.primary">
-                              Standard: {STANDARDS[student.standard]} <br/>
-                              NFT ID: {student.nftId.toString()}
+                              School Type: {student.schoolType || 'N/A'} <br/>
+                              Standard: {student.standard !== undefined ? STANDARDS[student.standard] : 'N/A'} <br/>
+                              NFT ID: {student.nftId ? student.nftId.toString() : 'Not minted'} <br/>
+                              Campaign ID: {student.campaignId ? student.campaignId.toString() : 'N/A'}
                             </Typography>
                           </>
                         }

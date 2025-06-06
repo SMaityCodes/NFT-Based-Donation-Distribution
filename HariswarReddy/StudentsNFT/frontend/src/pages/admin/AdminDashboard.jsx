@@ -15,7 +15,18 @@ import {
   ListItemText,
   ListItemIcon,
   IconButton,
-  Tooltip
+  Tooltip,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Alert,
+  TextField
 } from '@mui/material';
 import useWeb3Store from '../../store/web3Store';
 import { toast } from 'react-hot-toast';
@@ -41,6 +52,9 @@ const AdminDashboard = () => {
     vendorCount: 0,
     campaignCount: 0
   });
+  const [registerDialogOpen, setRegisterDialogOpen] = useState(false);
+  const [vendorAddress, setVendorAddress] = useState('');
+  const [registerError, setRegisterError] = useState('');
 
   const fetchAllData = async () => {
     if (!contract || !account) {
@@ -76,18 +90,34 @@ const AdminDashboard = () => {
         approved: student.approved
       }));
 
-      // Fetch vendor count and vendors
-      const vendorCount = await contract.vendorCount();
-      const vendorPromises = [];
-      for (let i = 0; i < vendorCount; i++) {
-        vendorPromises.push(contract.vendors(i));
+      // Fetch vendors using VendorRegistered event
+      const vendors = [];
+      const filter = contract.filters.VendorRegistered();
+      const events = await contract.queryFilter(filter, 0, 'latest');
+
+      // Process each event
+      for (const event of events) {
+        try {
+          const vendorAddress = event.args.vendorAddress;
+          const isVendor = await contract.isVendor(vendorAddress);
+          if (isVendor) {
+            // Get vendor's NFT verification history
+            const nftUsedFilter = contract.filters.NFTUsed(null, vendorAddress);
+            const nftEvents = await contract.queryFilter(nftUsedFilter, 0, 'latest');
+            
+            vendors.push({
+              id: vendorAddress,
+              address: vendorAddress,
+              approved: true,
+              registeredAt: new Date(event.blockNumber * 1000).toLocaleDateString(),
+              verifiedNFTs: nftEvents.length
+            });
+          }
+        } catch (error) {
+          console.error(`Error processing vendor event:`, error);
+          continue;
+        }
       }
-      const vendorResults = await Promise.all(vendorPromises);
-      const formattedVendors = vendorResults.map((vendor, index) => ({
-        id: index.toString(),
-        address: vendor.vendorAddress,
-        approved: vendor.approved
-      }));
 
       // Fetch total donations
       const totalDonations = await contract.getTotalDonations();
@@ -95,17 +125,37 @@ const AdminDashboard = () => {
       setStats({
         campaigns: formattedCampaigns,
         students: formattedStudents,
-        vendors: formattedVendors,
-        totalDonations: ethers.utils.formatEther(totalDonations),
-        studentCount: studentCount.toNumber(),
-        vendorCount: vendorCount.toNumber(),
-        campaignCount: campaigns.length
+        vendors: vendors,
+        totalDonations: ethers.formatEther(totalDonations),
+        studentCount: studentCount,
+        vendorCount: vendors.length,
+        campaignCount: formattedCampaigns.length
       });
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to fetch dashboard data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRegisterVendor = async () => {
+    if (!vendorAddress) {
+      setRegisterError('Please enter a vendor address');
+      return;
+    }
+
+    try {
+      setRegisterError('');
+      const tx = await contract.registerVendor(vendorAddress);
+      await tx.wait();
+      toast.success('Vendor registered successfully');
+      setRegisterDialogOpen(false);
+      setVendorAddress('');
+      fetchAllData(); // Refresh data
+    } catch (error) {
+      console.error('Error registering vendor:', error);
+      setRegisterError(error.message || 'Failed to register vendor');
     }
   };
 
@@ -130,19 +180,42 @@ const AdminDashboard = () => {
           p: 3, 
           mb: 4, 
           borderRadius: 2,
-          background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+          background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
           color: 'white'
         }}
       >
         <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="h4" fontWeight="bold">
-            Admin Dashboard
-          </Typography>
-          <Tooltip title="Refresh Data">
-            <IconButton onClick={fetchAllData} sx={{ color: 'white' }}>
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <PersonIcon sx={{ fontSize: 40 }} />
+            <Box>
+              <Typography variant="h4" fontWeight="bold">
+                Admin Dashboard
+              </Typography>
+              <Typography variant="subtitle1" sx={{ opacity: 0.8 }}>
+                Overview of campaigns, students, and vendors
+              </Typography>
+            </Box>
+          </Stack>
+          <Stack direction="row" spacing={2}>
+            <Button
+              variant="contained"
+              color="inherit"
+              onClick={() => setRegisterDialogOpen(true)}
+              sx={{ 
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                }
+              }}
+            >
+              Register Vendor
+            </Button>
+            <Tooltip title="Refresh Data">
+              <IconButton onClick={fetchAllData} sx={{ color: 'white' }}>
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
+          </Stack>
         </Stack>
       </Paper>
 
@@ -158,7 +231,7 @@ const AdminDashboard = () => {
                     {stats.campaignCount}
                   </Typography>
                   <Typography color="text.secondary">
-                    Active Campaigns
+                    Total Campaigns
                   </Typography>
                 </Box>
               </Stack>
@@ -175,7 +248,7 @@ const AdminDashboard = () => {
                     {stats.studentCount}
                   </Typography>
                   <Typography color="text.secondary">
-                    Registered Students
+                    Total Students
                   </Typography>
                 </Box>
               </Stack>
@@ -192,7 +265,7 @@ const AdminDashboard = () => {
                     {stats.vendorCount}
                   </Typography>
                   <Typography color="text.secondary">
-                    Approved Vendors
+                    Total Vendors
                   </Typography>
                 </Box>
               </Stack>
@@ -218,48 +291,9 @@ const AdminDashboard = () => {
         </Grid>
       </Grid>
 
-      {/* Detailed Lists */}
+      {/* Recent Activity */}
       <Grid container spacing={3}>
-        {/* Campaigns List */}
-        <Grid item xs={12} md={6}>
-          <Card elevation={2}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Recent Campaigns
-              </Typography>
-              <List>
-                {stats.campaigns.slice(0, 5).map((campaign) => (
-                  <React.Fragment key={campaign.id}>
-                    <ListItem>
-                      <ListItemIcon>
-                        <CampaignIcon color="primary" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={campaign.name}
-                        secondary={
-                          <Stack direction="row" spacing={1} mt={1}>
-                            <Chip 
-                              label={campaign.exists ? "Active" : "Inactive"}
-                              color={campaign.exists ? "success" : "error"}
-                              size="small"
-                            />
-                            <Chip 
-                              label={`${campaign.allowedSchoolTypes.length} School Types`}
-                              size="small"
-                            />
-                          </Stack>
-                        }
-                      />
-                    </ListItem>
-                    <Divider />
-                  </React.Fragment>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Students List */}
+        {/* Recent Students */}
         <Grid item xs={12} md={6}>
           <Card elevation={2}>
             <CardContent>
@@ -303,7 +337,7 @@ const AdminDashboard = () => {
           <Card elevation={2}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Approved Vendors
+                Registered Vendors
               </Typography>
               <List>
                 {stats.vendors.map((vendor) => (
@@ -313,16 +347,21 @@ const AdminDashboard = () => {
                         <StoreIcon color="warning" />
                       </ListItemIcon>
                       <ListItemText
-                        primary={`Vendor #${vendor.id}`}
+                        primary={`Vendor ${vendor.address.slice(0, 6)}...${vendor.address.slice(-4)}`}
                         secondary={
                           <Stack direction="row" spacing={1} mt={1}>
                             <Chip 
-                              label={vendor.approved ? "Approved" : "Pending"}
-                              color={vendor.approved ? "success" : "warning"}
+                              label="Registered"
+                              color="success"
                               size="small"
                             />
                             <Chip 
-                              label={vendor.address}
+                              label={`Registered: ${vendor.registeredAt}`}
+                              size="small"
+                            />
+                            <Chip 
+                              label={`Verified ${vendor.verifiedNFTs} NFTs`}
+                              color="info"
                               size="small"
                             />
                           </Stack>
@@ -337,6 +376,39 @@ const AdminDashboard = () => {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Register Vendor Dialog */}
+      <Dialog open={registerDialogOpen} onClose={() => setRegisterDialogOpen(false)}>
+        <DialogTitle>Register New Vendor</DialogTitle>
+        <DialogContent>
+          {registerError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {registerError}
+            </Alert>
+          )}
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Vendor Address"
+            type="text"
+            fullWidth
+            value={vendorAddress}
+            onChange={(e) => setVendorAddress(e.target.value)}
+            error={!!registerError}
+            helperText={registerError}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRegisterDialogOpen(false)}>Cancel</Button>
+          <Button 
+            onClick={handleRegisterVendor}
+            variant="contained"
+            disabled={!vendorAddress}
+          >
+            Register
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

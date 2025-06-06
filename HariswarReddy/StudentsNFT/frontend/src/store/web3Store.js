@@ -8,6 +8,9 @@ const useWeb3Store = create((set, get) => ({
   contract: null,
   isConnected: false,
   isOwner: false,
+  isAdmin: false,
+  isStudent: false,
+  isVendor: false,
   loading: false,
   error: null,
 
@@ -28,11 +31,25 @@ const useWeb3Store = create((set, get) => ({
       const owner = await contract.owner();
       const isOwner = owner.toLowerCase() === accounts[0].toLowerCase();
 
+      // Check roles
+      const isAdmin = isOwner; // Owner is also admin
+      const isStudent = await contract.isStudentRegistered(accounts[0]);
+      
+      // Check if address is a vendor by looking for VendorRegistered event
+      const filter = contract.filters.VendorRegistered();
+      const events = await contract.queryFilter(filter, 0, 'latest');
+      const isVendor = events.some(event => 
+        event.args.vendorAddress.toLowerCase() === accounts[0].toLowerCase()
+      );
+
       set({
         account: accounts[0],
         contract,
         isConnected: true,
         isOwner,
+        isAdmin,
+        isStudent,
+        isVendor,
         loading: false,
       });
 
@@ -66,6 +83,9 @@ const useWeb3Store = create((set, get) => ({
       contract: null,
       isConnected: false,
       isOwner: false,
+      isAdmin: false,
+      isStudent: false,
+      isVendor: false,
       error: null,
     });
     toast.info('Wallet disconnected');
@@ -79,7 +99,17 @@ const useWeb3Store = create((set, get) => ({
       set({ loading: true, error: null });
       const owner = await contract.owner();
       const isOwner = owner.toLowerCase() === account.toLowerCase();
-      set({ isOwner, loading: false });
+      const isAdmin = isOwner;
+      const isStudent = await contract.isStudentRegistered(account);
+      
+      // Check if address is a vendor by looking for VendorRegistered event
+      const filter = contract.filters.VendorRegistered();
+      const events = await contract.queryFilter(filter, 0, 'latest');
+      const isVendor = events.some(event => 
+        event.args.vendorAddress.toLowerCase() === account.toLowerCase()
+      );
+      
+      set({ isOwner, isAdmin, isStudent, isVendor, loading: false });
     } catch (error) {
       console.error('Error refreshing web3 state:', error);
       set({ error: error.message, loading: false });

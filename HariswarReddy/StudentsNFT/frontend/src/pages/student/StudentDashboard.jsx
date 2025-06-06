@@ -52,10 +52,6 @@ const StudentDashboard = () => {
     try {
       setLoading(true);
 
-      // Fetch student profile
-      const studentId = await contract.getStudentId(account);
-      const studentProfile = await contract.students(studentId);
-      
       // Fetch all campaigns
       const allCampaigns = await contract.getAllCampaigns();
       
@@ -65,17 +61,21 @@ const StudentDashboard = () => {
 
       for (let i = 0; i < allCampaigns.length; i++) {
         try {
-          const studentCampaign = await contract.getStudentCampaign(studentId, i);
-          if (studentCampaign.registered) {
+          const students = await contract.getStudentsByCampaign(i);
+          const student = students.find(s => s.studentAddress.toLowerCase() === account.toLowerCase());
+          
+          if (student) {
             const campaign = allCampaigns[i];
+            const isApproved = student.approved;
             const campaignData = {
               id: i.toString(),
               name: campaign.name,
-              status: studentCampaign.approved ? 'Approved' : 'Pending',
-              registrationDate: new Date(studentCampaign.registrationDate.toNumber() * 1000).toLocaleDateString()
+              status: isApproved ? 'Approved' : 'Pending',
+              nftId: student.nftId.toString(),
+              amount: campaign.amount.toString()
             };
             
-            if (studentCampaign.approved) {
+            if (isApproved) {
               approvedCampaigns.push(campaignData);
             } else {
               pendingCampaigns.push(campaignData);
@@ -86,20 +86,28 @@ const StudentDashboard = () => {
         }
       }
 
-      // Fetch total donations
-      const totalDonations = await contract.getStudentTotalDonations(studentId);
+      // Get the first approved campaign's NFT details if available
+      let nftId = '0';
+      let totalDonations = '0';
+      if (approvedCampaigns.length > 0) {
+        const firstApproved = approvedCampaigns[0];
+        nftId = firstApproved.nftId;
+        try {
+          const nftDetails = await contract.getNFTDetails(firstApproved.nftId);
+          totalDonations = ethers.formatEther(nftDetails.amount);
+        } catch (error) {
+          console.error('Error fetching NFT details:', error);
+        }
+      }
 
       setStudentData({
         profile: {
-          id: studentId.toString(),
-          address: studentProfile.studentAddress,
-          schoolType: studentProfile.schoolType === 0 ? 'Government' : 'Private',
-          standard: studentProfile.standard.toString(),
-          approved: studentProfile.approved
+          address: account,
+          nftId: nftId
         },
         approvedCampaigns,
         pendingCampaigns,
-        totalDonations: ethers.utils.formatEther(totalDonations)
+        totalDonations
       });
     } catch (error) {
       console.error('Error fetching student data:', error);
@@ -108,6 +116,23 @@ const StudentDashboard = () => {
       setLoading(false);
     }
   };
+
+  // Add event listener for approval events
+  useEffect(() => {
+    if (!contract || !account) return;
+
+    const handleStudentApproved = (studentAddress, campaignId, nftId) => {
+      if (studentAddress.toLowerCase() === account.toLowerCase()) {
+        fetchStudentData(); // Refresh data when student is approved
+      }
+    };
+
+    contract.on('StudentApproved', handleStudentApproved);
+
+    return () => {
+      contract.off('StudentApproved', handleStudentApproved);
+    };
+  }, [contract, account]);
 
   useEffect(() => {
     fetchStudentData();
@@ -178,11 +203,11 @@ const StudentDashboard = () => {
               <Stack direction="row" spacing={2} alignItems="center">
                 <PersonIcon color="primary" sx={{ fontSize: 40 }} />
                 <Box>
-                  <Typography variant="h4" fontWeight="bold">
-                    {studentData.profile?.id}
+                  <Typography variant="h6" fontWeight="bold" noWrap>
+                    {studentData.profile?.address.slice(0, 6)}...{studentData.profile?.address.slice(-4)}
                   </Typography>
                   <Typography color="text.secondary">
-                    Student ID
+                    Wallet Address
                   </Typography>
                 </Box>
               </Stack>
@@ -193,13 +218,13 @@ const StudentDashboard = () => {
           <Card elevation={2}>
             <CardContent>
               <Stack direction="row" spacing={2} alignItems="center">
-                <SchoolIcon color="success" sx={{ fontSize: 40 }} />
+                <CampaignIcon color="success" sx={{ fontSize: 40 }} />
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    {studentData.profile?.standard}
+                    {studentData.approvedCampaigns.length + studentData.pendingCampaigns.length}
                   </Typography>
                   <Typography color="text.secondary">
-                    Standard
+                    Total Campaigns
                   </Typography>
                 </Box>
               </Stack>
@@ -210,30 +235,30 @@ const StudentDashboard = () => {
           <Card elevation={2}>
             <CardContent>
               <Stack direction="row" spacing={2} alignItems="center">
-                <CampaignIcon color="warning" sx={{ fontSize: 40 }} />
-                <Box>
-                  <Typography variant="h4" fontWeight="bold">
-                    {studentData.approvedCampaigns.length}
-                  </Typography>
-                  <Typography color="text.secondary">
-                    Approved Campaigns
-                  </Typography>
-                </Box>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card elevation={2}>
-            <CardContent>
-              <Stack direction="row" spacing={2} alignItems="center">
-                <MoneyIcon color="error" sx={{ fontSize: 40 }} />
+                <MoneyIcon color="primary" sx={{ fontSize: 40 }} />
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
                     {studentData.totalDonations} ETH
                   </Typography>
                   <Typography color="text.secondary">
                     Total Donations
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card elevation={2}>
+            <CardContent>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <CheckCircleIcon color="success" sx={{ fontSize: 40 }} />
+                <Box>
+                  <Typography variant="h4" fontWeight="bold">
+                    {studentData.profile?.nftId !== '0' ? `#${studentData.profile?.nftId}` : 'N/A'}
+                  </Typography>
+                  <Typography color="text.secondary">
+                    NFT ID
                   </Typography>
                 </Box>
               </Stack>
@@ -251,40 +276,24 @@ const StudentDashboard = () => {
               <Typography variant="h6" gutterBottom>
                 Approved Campaigns
               </Typography>
-              {studentData.approvedCampaigns.length === 0 ? (
-                <Typography color="text.secondary" align="center" py={2}>
-                  No approved campaigns yet
-                </Typography>
-              ) : (
-                <List>
-                  {studentData.approvedCampaigns.map((campaign) => (
-                    <React.Fragment key={campaign.id}>
-                      <ListItem>
-                        <ListItemIcon>
-                          <CheckCircleIcon color="success" />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={campaign.name}
-                          secondary={
-                            <Stack direction="row" spacing={1} mt={1}>
-                              <Chip 
-                                label="Approved"
-                                color="success"
-                                size="small"
-                              />
-                              <Chip 
-                                label={`Registered: ${campaign.registrationDate}`}
-                                size="small"
-                              />
-                            </Stack>
-                          }
-                        />
-                      </ListItem>
-                      <Divider />
-                    </React.Fragment>
-                  ))}
-                </List>
-              )}
+              <List>
+                {studentData.approvedCampaigns.map((campaign) => (
+                  <ListItem key={campaign.id}>
+                    <ListItemIcon>
+                      <CheckCircleIcon color="success" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={campaign.name}
+                      secondary={`NFT ID: #${campaign.nftId}`}
+                    />
+                  </ListItem>
+                ))}
+                {studentData.approvedCampaigns.length === 0 && (
+                  <ListItem>
+                    <ListItemText primary="No approved campaigns" />
+                  </ListItem>
+                )}
+              </List>
             </CardContent>
           </Card>
         </Grid>
@@ -294,42 +303,26 @@ const StudentDashboard = () => {
           <Card elevation={2}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Pending Approvals
+                Pending Campaigns
               </Typography>
-              {studentData.pendingCampaigns.length === 0 ? (
-                <Typography color="text.secondary" align="center" py={2}>
-                  No pending approvals
-                </Typography>
-              ) : (
-                <List>
-                  {studentData.pendingCampaigns.map((campaign) => (
-                    <React.Fragment key={campaign.id}>
-                      <ListItem>
-                        <ListItemIcon>
-                          <PendingIcon color="warning" />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={campaign.name}
-                          secondary={
-                            <Stack direction="row" spacing={1} mt={1}>
-                              <Chip 
-                                label="Pending"
-                                color="warning"
-                                size="small"
-                              />
-                              <Chip 
-                                label={`Registered: ${campaign.registrationDate}`}
-                                size="small"
-                              />
-                            </Stack>
-                          }
-                        />
-                      </ListItem>
-                      <Divider />
-                    </React.Fragment>
-                  ))}
-                </List>
-              )}
+              <List>
+                {studentData.pendingCampaigns.map((campaign) => (
+                  <ListItem key={campaign.id}>
+                    <ListItemIcon>
+                      <PendingIcon color="warning" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={campaign.name}
+                      secondary="Waiting for approval"
+                    />
+                  </ListItem>
+                ))}
+                {studentData.pendingCampaigns.length === 0 && (
+                  <ListItem>
+                    <ListItemText primary="No pending campaigns" />
+                  </ListItem>
+                )}
+              </List>
             </CardContent>
           </Card>
         </Grid>

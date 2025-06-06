@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useWeb3Store } from '../store/web3Store';
 import {
@@ -23,21 +23,27 @@ import {
   Divider,
   Switch,
   FormControlLabel,
+  Chip
 } from '@mui/material';
 import {
   Menu as MenuIcon,
   AccountCircle,
-  Dashboard,
-  Campaign,
+  Dashboard as DashboardIcon,
+  Campaign as CampaignIcon,
   People,
   Store,
   Brightness4,
   Brightness7,
-  Logout,
+  Logout as LogoutIcon,
+  School as SchoolIcon,
+  VolunteerActivism as DonateIcon,
+  HowToReg as RegisterIcon,
+  AccountBalanceWallet as WalletIcon,
+  Person as PersonIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { Link as RouterLink } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { ethers } from 'ethers';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   background: theme.palette.mode === 'dark' 
@@ -49,57 +55,213 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
 const Navbar = ({ toggleTheme, isDarkMode }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { account, connectWallet, disconnectWallet, isConnected } = useWeb3Store();
-  const { userRole } = useAuth();
+  const { 
+    contract, 
+    account, 
+    connectWallet, 
+    disconnectWallet, 
+    isAdmin, 
+    isStudent, 
+    isVendor 
+  } = useWeb3Store();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
-  const [anchorElNav, setAnchorElNav] = useState(null);
-  const [anchorElUser, setAnchorElUser] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [walletBalance, setWalletBalance] = useState('0');
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (!account) return;
+      try {
+        if (window.ethereum) {
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          const balance = await provider.getBalance(account);
+          setWalletBalance(ethers.formatEther(balance).slice(0, 6));
+        }
+      } catch (error) {
+        console.error('Error fetching balance:', error);
+      }
+    };
+
+    fetchBalance();
+  }, [account]);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  const handleOpenNavMenu = (event) => {
-    setAnchorElNav(event.currentTarget);
+  const handleMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
   };
 
-  const handleCloseNavMenu = () => {
-    setAnchorElNav(null);
-  };
-
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
-  };
-
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
-  };
-
-  const handleWalletAction = () => {
-    if (isConnected) {
-      disconnectWallet();
-    } else {
-      connectWallet();
-    }
+  const handleMenuClose = () => {
+    setAnchorEl(null);
   };
 
   const handleNavigation = (path) => {
     navigate(path);
-    handleCloseUserMenu();
-    if (isMobile) {
-      setMobileOpen(false);
+    handleMenuClose();
+    setMobileOpen(false);
+  };
+
+  const handleConnectWallet = async () => {
+    try {
+      await connectWallet();
+    } catch (error) {
+      console.error('Error connecting wallet:', error);
     }
   };
 
-  const menuItems = [
-    { text: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard' },
-    { text: 'Campaigns', icon: <Campaign />, path: '/admin/campaigns' },
-    { text: 'Students', icon: <People />, path: '/admin/students' },
-    { text: 'Vendors', icon: <Store />, path: '/admin/vendors' },
-  ];
+  const handleDisconnectWallet = () => {
+    disconnectWallet();
+    handleMenuClose();
+  };
+
+  const renderWalletButton = () => {
+    if (!account) {
+      return (
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<WalletIcon />}
+          onClick={handleConnectWallet}
+          sx={{ ml: 2 }}
+        >
+          Connect Wallet
+        </Button>
+      );
+    }
+
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Chip
+          icon={<WalletIcon />}
+          label={`${walletBalance} ETH`}
+          color="primary"
+          variant="outlined"
+        />
+        <Button
+          variant="outlined"
+          color="inherit"
+          onClick={handleDisconnectWallet}
+          startIcon={<LogoutIcon />}
+        >
+          Disconnect
+        </Button>
+      </Box>
+    );
+  };
+
+  const renderNavigationItems = () => {
+    if (!account) {
+      return (
+        <>
+          <Button
+            color="inherit"
+            startIcon={<RegisterIcon />}
+            onClick={() => handleNavigation('/register')}
+          >
+            Register as Student
+          </Button>
+          <Button
+            color="inherit"
+            startIcon={<DonateIcon />}
+            onClick={() => handleNavigation('/donate')}
+          >
+            Donate
+          </Button>
+        </>
+      );
+    }
+
+    if (isAdmin) {
+      return (
+        <>
+          <Button
+            color="inherit"
+            startIcon={<DashboardIcon />}
+            onClick={() => handleNavigation('/admin/dashboard')}
+          >
+            Dashboard
+          </Button>
+          <Button
+            color="inherit"
+            startIcon={<SchoolIcon />}
+            onClick={() => handleNavigation('/admin/students')}
+          >
+            Students
+          </Button>
+          <Button
+            color="inherit"
+            startIcon={<CampaignIcon />}
+            onClick={() => handleNavigation('/admin/campaigns')}
+          >
+            Campaigns
+          </Button>
+          <Button
+            color="inherit"
+            startIcon={<Store />}
+            onClick={() => handleNavigation('/admin/vendors')}
+          >
+            Vendors
+          </Button>
+        </>
+      );
+    }
+
+    if (isStudent) {
+      return (
+        <>
+          <Button
+            color="inherit"
+            startIcon={<DashboardIcon />}
+            onClick={() => handleNavigation('/student/dashboard')}
+          >
+            Dashboard
+          </Button>
+          <Button
+            color="inherit"
+            startIcon={<CampaignIcon />}
+            onClick={() => handleNavigation('/student/campaigns')}
+          >
+            Campaigns
+          </Button>
+          <Button
+            color="inherit"
+            startIcon={<PersonIcon />}
+            onClick={() => handleNavigation('/student/profile')}
+          >
+            Profile
+          </Button>
+        </>
+      );
+    }
+
+    if (isVendor) {
+      return (
+        <>
+          <Button
+            color="inherit"
+            startIcon={<DashboardIcon />}
+            onClick={() => handleNavigation('/vendor/dashboard')}
+          >
+            Dashboard
+          </Button>
+        </>
+      );
+    }
+
+    return (
+      <Button
+        color="inherit"
+        startIcon={<DonateIcon />}
+        onClick={() => handleNavigation('/donate')}
+      >
+        Donate
+      </Button>
+    );
+  };
 
   const drawer = (
     <Box sx={{ width: 250 }}>
@@ -110,26 +272,70 @@ const Navbar = ({ toggleTheme, isDarkMode }) => {
       </Box>
       <Divider />
       <List>
-        {menuItems.map((item) => (
-          <ListItem
-            button
-            key={item.text}
-            onClick={() => handleNavigation(item.path)}
-            selected={location.pathname === item.path}
-            sx={{
-              '&.Mui-selected': {
-                backgroundColor: theme.palette.mode === 'dark' 
-                  ? 'rgba(144, 202, 249, 0.16)'
-                  : 'rgba(25, 118, 210, 0.12)',
-              },
-            }}
-          >
-            <ListItemIcon sx={{ color: location.pathname === item.path ? theme.palette.primary.main : 'inherit' }}>
-              {item.icon}
-            </ListItemIcon>
-            <ListItemText primary={item.text} />
-          </ListItem>
-        ))}
+        {!account ? (
+          <>
+            <ListItem button onClick={() => handleNavigation('/register')}>
+              <ListItemIcon><RegisterIcon /></ListItemIcon>
+              <ListItemText primary="Register as Student" />
+            </ListItem>
+            <ListItem button onClick={() => handleNavigation('/donate')}>
+              <ListItemIcon><DonateIcon /></ListItemIcon>
+              <ListItemText primary="Donate" />
+            </ListItem>
+          </>
+        ) : (
+          <>
+            {isAdmin && (
+              <>
+                <ListItem button onClick={() => handleNavigation('/admin/dashboard')}>
+                  <ListItemIcon><DashboardIcon /></ListItemIcon>
+                  <ListItemText primary="Dashboard" />
+                </ListItem>
+                <ListItem button onClick={() => handleNavigation('/admin/students')}>
+                  <ListItemIcon><SchoolIcon /></ListItemIcon>
+                  <ListItemText primary="Students" />
+                </ListItem>
+                <ListItem button onClick={() => handleNavigation('/admin/campaigns')}>
+                  <ListItemIcon><CampaignIcon /></ListItemIcon>
+                  <ListItemText primary="Campaigns" />
+                </ListItem>
+                <ListItem button onClick={() => handleNavigation('/admin/vendors')}>
+                  <ListItemIcon><Store /></ListItemIcon>
+                  <ListItemText primary="Vendors" />
+                </ListItem>
+              </>
+            )}
+            {isStudent && (
+              <>
+                <ListItem button onClick={() => handleNavigation('/student/dashboard')}>
+                  <ListItemIcon><DashboardIcon /></ListItemIcon>
+                  <ListItemText primary="Dashboard" />
+                </ListItem>
+                <ListItem button onClick={() => handleNavigation('/student/campaigns')}>
+                  <ListItemIcon><CampaignIcon /></ListItemIcon>
+                  <ListItemText primary="Campaigns" />
+                </ListItem>
+                <ListItem button onClick={() => handleNavigation('/student/profile')}>
+                  <ListItemIcon><PersonIcon /></ListItemIcon>
+                  <ListItemText primary="Profile" />
+                </ListItem>
+              </>
+            )}
+            {isVendor && (
+              <>
+                <ListItem button onClick={() => handleNavigation('/vendor/dashboard')}>
+                  <ListItemIcon><DashboardIcon /></ListItemIcon>
+                  <ListItemText primary="Dashboard" />
+                </ListItem>
+              </>
+            )}
+            <Divider />
+            <ListItem button onClick={handleDisconnectWallet}>
+              <ListItemIcon><LogoutIcon /></ListItemIcon>
+              <ListItemText primary="Disconnect Wallet" />
+            </ListItem>
+          </>
+        )}
       </List>
     </Box>
   );
@@ -169,87 +375,10 @@ const Navbar = ({ toggleTheme, isDarkMode }) => {
 
           {!isMobile && (
             <Box sx={{ flexGrow: 1, display: 'flex', gap: 2 }}>
-              {menuItems.map((item) => (
-                <Button
-                  key={item.text}
-                  onClick={() => handleNavigation(item.path)}
-                  startIcon={item.icon}
-                  sx={{
-                    color: 'white',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    },
-                    ...(location.pathname === item.path && {
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    }),
-                  }}
-                >
-                  {item.text}
-                </Button>
-              ))}
+              {renderNavigationItems()}
+              {renderWalletButton()}
             </Box>
           )}
-
-          <Box sx={{ flexGrow: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
-            <IconButton
-              sx={{ ml: 1, mr: 2 }}
-              onClick={toggleTheme}
-              color="inherit"
-            >
-              {isDarkMode ? <Brightness7 /> : <Brightness4 />}
-            </IconButton>
-
-            <Button
-              variant="contained"
-              onClick={handleWalletAction}
-              sx={{
-                backgroundColor: isConnected ? theme.palette.success.main : theme.palette.primary.main,
-                '&:hover': {
-                  backgroundColor: isConnected ? theme.palette.success.dark : theme.palette.primary.dark,
-                },
-              }}
-            >
-              {isConnected ? 'Connected' : 'Connect Wallet'}
-            </Button>
-
-            {isConnected && (
-              <>
-                <Tooltip title="Open settings">
-                  <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                    <Avatar sx={{ bgcolor: theme.palette.secondary.main }}>
-                      {account ? account.slice(2, 4).toUpperCase() : <AccountCircle />}
-                    </Avatar>
-                  </IconButton>
-                </Tooltip>
-                <Menu
-                  sx={{ mt: '45px' }}
-                  id="menu-appbar"
-                  anchorEl={anchorElUser}
-                  anchorOrigin={{
-                    vertical: 'top',
-                    horizontal: 'right',
-                  }}
-                  keepMounted
-                  transformOrigin={{
-                    vertical: 'top',
-                    horizontal: 'right',
-                  }}
-                  open={Boolean(anchorElUser)}
-                  onClose={handleCloseUserMenu}
-                >
-                  <MenuItem onClick={() => {
-                    handleCloseUserMenu();
-                    disconnectWallet();
-                  }}>
-                    <ListItemIcon>
-                      <Logout fontSize="small" />
-                    </ListItemIcon>
-                    <Typography textAlign="center">Disconnect</Typography>
-                  </MenuItem>
-                </Menu>
-              </>
-            )}
-          </Box>
         </Toolbar>
       </Container>
 
