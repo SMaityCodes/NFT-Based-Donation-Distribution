@@ -1,0 +1,6 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useWeb3Store } from '../store/web3Store';
+// ... rest of the imports ...
+
+// ... rest of the code ... 
