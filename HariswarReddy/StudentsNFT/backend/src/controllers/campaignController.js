@@ -110,10 +110,7 @@ const deleteCampaign = async (req, res) => {
 // Get all donors
 const getAllDonors = async (req, res) => {
   try {
-    const campaigns = await Campaign.find();
-    const donors = [...new Set(campaigns.flatMap(campaign => 
-      campaign.donors.map(donor => donor.address)
-    ))];
+    const donors = await Donor.find().sort({ createdAt: -1 });
     res.json({
       success: true,
       data: donors
@@ -149,44 +146,65 @@ const getDonorsForCampaign = async (req, res) => {
 };
 
 // Get students by campaign ID
-exports.getStudentsByCampaignId = async (req, res) => {
+const getStudentsByCampaignId = async (req, res) => {
   try {
     const students = await Student.find({ campaignId: req.params.id }).sort({ registeredAt: 1 });
-    res.json(students);
+    res.json({
+      success: true,
+      data: students
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
   }
 };
 
 // Get approved students by campaign ID
-exports.getApprovedStudentsByCampaignId = async (req, res) => {
+const getApprovedStudentsByCampaignId = async (req, res) => {
   try {
     const students = await Student.find({ campaignId: req.params.id, approved: true }).sort({ approvedAt: 1 });
-    res.json(students);
+    res.json({
+      success: true,
+      data: students
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
   }
 };
 
 // Get all vendors
-exports.getAllVendors = async (req, res) => {
+const getAllVendors = async (req, res) => {
   try {
     const vendors = await Vendor.find().sort({ registeredAt: 1 });
-    res.json(vendors);
+    res.json({
+      success: true,
+      data: vendors
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
   }
 };
 
-// Get NFT details (from DB instead of direct contract for indexed info)
-exports.getNFTDetails = async (req, res) => {
+// Get NFT details
+const getNFTDetails = async (req, res) => {
   try {
     const nftId = parseInt(req.params.id);
     const vendorTx = await VendorTransaction.findOne({ nftId: nftId });
     const student = await Student.findOne({ nftId: nftId });
 
     if (!student && !vendorTx) {
-      return res.status(404).json({ message: 'NFT not found in indexed data' });
+      return res.status(404).json({
+        success: false,
+        error: 'NFT not found in indexed data'
+      });
     }
 
     // Combine data from student and vendor transaction if available
@@ -194,25 +212,38 @@ exports.getNFTDetails = async (req, res) => {
       nftId: nftId,
       studentAddress: student ? student.studentAddress : null,
       standard: student ? student.standard : null,
-      amount: student ? student.nftAmount : null, // Assuming you add nftAmount to Student model during approval indexing
-      isUsed: !!vendorTx, // True if a vendor transaction exists
+      amount: student ? student.nftAmount : null,
+      isUsed: !!vendorTx,
       itemProvided: vendorTx ? vendorTx.itemProvided : null,
       vendorAddress: vendorTx ? vendorTx.vendorAddress : null,
-      timestamp: vendorTx ? vendorTx.timestamp : null,
+      timestamp: vendorTx ? vendorTx.timestamp : null
     };
-    res.json(response);
+
+    res.json({
+      success: true,
+      data: response
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
   }
 };
 
 // Get all vendor transactions
-exports.getAllVendorTransactions = async (req, res) => {
+const getAllVendorTransactions = async (req, res) => {
   try {
     const transactions = await VendorTransaction.find().sort({ timestamp: -1 });
-    res.json(transactions);
+    res.json({
+      success: true,
+      data: transactions
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
   }
 };
 
@@ -223,5 +254,10 @@ module.exports = {
   updateCampaign,
   deleteCampaign,
   getAllDonors,
-  getDonorsForCampaign
+  getDonorsForCampaign,
+  getStudentsByCampaignId,
+  getApprovedStudentsByCampaignId,
+  getAllVendors,
+  getNFTDetails,
+  getAllVendorTransactions
 };

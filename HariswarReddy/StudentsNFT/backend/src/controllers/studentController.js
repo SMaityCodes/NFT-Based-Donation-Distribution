@@ -76,20 +76,31 @@ const approveStudent = async (req, res) => {
     const wallet = new ethers.Wallet(process.env.ADMIN_PRIVATE_KEY, provider);
     const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, wallet);
 
-    // Mint NFT for the student
-    const tx = await contract.mintNFT(
-      student.address,
-      student.schoolType,
-      student.standard,
-      student.campaignId
-    );
+    // Get student ID from the contract
+    const students = await contract.getStudentsByCampaign(student.campaignId);
+    const studentInContract = students.find(s => s.studentAddress.toLowerCase() === student.address.toLowerCase());
+    
+    if (!studentInContract) {
+      return res.status(400).json({
+        success: false,
+        error: 'Student not found in campaign'
+      });
+    }
+
+    // Approve student using the contract function
+    const tx = await contract.approveStudent(studentInContract.id);
     await tx.wait();
+
+    // Get the NFT ID from the StudentApproved event
+    const receipt = await tx.wait();
+    const event = receipt.events.find(e => e.event === 'StudentApproved');
+    const nftId = event.args.nftId;
 
     // Update student record
     student.approved = true;
     student.nftMinted = true;
     student.nftTransactionHash = tx.hash;
-    student.nftId = (await contract.tokenOfOwnerByIndex(student.address, 0)).toNumber();
+    student.nftId = nftId.toNumber();
     await student.save();
 
     res.json({
@@ -97,6 +108,7 @@ const approveStudent = async (req, res) => {
       data: student
     });
   } catch (error) {
+    console.error('Error approving student:', error);
     res.status(500).json({
       success: false,
       error: error.message

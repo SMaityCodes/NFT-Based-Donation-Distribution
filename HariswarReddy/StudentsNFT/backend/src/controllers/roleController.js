@@ -5,7 +5,7 @@ const Donor = require('../models/Donor');
 const blockchainService = require('../services/blockchainService');
 
 // Check if address is admin
-exports.checkAdmin = async (req, res) => {
+const checkAdmin = async (req, res) => {
   try {
     const admin = await Admin.findOne({ address: req.params.address.toLowerCase() });
     res.json({ isAdmin: !!admin });
@@ -15,7 +15,7 @@ exports.checkAdmin = async (req, res) => {
 };
 
 // Check if address is student
-exports.checkStudent = async (req, res) => {
+const checkStudent = async (req, res) => {
   try {
     const student = await Student.findOne({ studentAddress: req.params.address.toLowerCase() });
     res.json({ isStudent: !!student });
@@ -25,7 +25,7 @@ exports.checkStudent = async (req, res) => {
 };
 
 // Check if address is vendor
-exports.checkVendor = async (req, res) => {
+const checkVendor = async (req, res) => {
   try {
     const vendor = await Vendor.findOne({ vendorAddress: req.params.address.toLowerCase() });
     res.json({ isVendor: !!vendor });
@@ -35,7 +35,7 @@ exports.checkVendor = async (req, res) => {
 };
 
 // Check if address is donor
-exports.checkDonor = async (req, res) => {
+const checkDonor = async (req, res) => {
   try {
     const donor = await Donor.findOne({ donorAddress: req.params.address.toLowerCase() });
     res.json({ isDonor: !!donor });
@@ -144,7 +144,7 @@ const approveVendor = async (req, res) => {
 };
 
 // Student Controllers
-exports.getStudent = async (req, res) => {
+const getStudent = async (req, res) => {
   try {
     const student = await Student.findOne({ address: req.params.address.toLowerCase() });
     if (!student) {
@@ -165,7 +165,7 @@ exports.getStudent = async (req, res) => {
   }
 };
 
-exports.approveStudent = async (req, res) => {
+const approveStudent = async (req, res) => {
   try {
     const student = await Student.findOneAndUpdate(
       { address: req.params.address.toLowerCase() },
@@ -192,9 +192,15 @@ exports.approveStudent = async (req, res) => {
 
 // Export all controller methods
 module.exports = {
+  checkAdmin,
+  checkStudent,
+  checkVendor,
+  checkDonor,
   createAdmin,
   getAdmin,
   createVendor,
   getVendor,
-  approveVendor
+  approveVendor,
+  getStudent,
+  approveStudent
 }; 
