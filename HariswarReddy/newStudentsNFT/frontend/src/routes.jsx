@@ -1,0 +1,125 @@
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { Box, Container, Typography } from '@mui/material';
+
+// Admin Pages
+import AdminDashboardMUI from './pages/AdminDashboardMUI';
+import AdminCampaigns from './pages/admin/AdminCampaigns';
+import AdminStudents from './pages/admin/AdminStudents';
+import AdminVendors from './pages/admin/AdminVendors';
+
+// Donor Pages
+import DonorDashboard from './pages/DonorDashboard';
+import DonorDonations from './pages/DonorDonations';
+import DonorCampaigns from './pages/donor/DonorCampaigns';
+import DonorNFTs from './pages/donor/DonorNFTs';
+
+// Student Pages
+import StudentDashboard from './pages/student/StudentDashboard';
+import StudentCampaigns from './pages/student/StudentCampaigns';
+import StudentProfile from './pages/student/StudentProfile';
+import StudentNFTs from './pages/student/StudentNFTs';
+import RegisterStudentMUI from './pages/RegisterStudentMUI';
+
+// Vendor Pages
+import VendorDashboard from './pages/vendor/VendorDashboard';
+import VendorTransactions from './pages/vendor/VendorTransactions';
+import VendorProfile from './pages/vendor/VendorProfile';
+
+// Public Pages
+import CampaignDetailMUI from './pages/CampaignDetailMUI';
+import MyNFTsMUI from './pages/MyNFTsMUI';
+import ViewFunctions from './pages/ViewFunctions';
+import VendorCampaigns from './pages/vendor/VendorCampaigns';
+import StandardTokenURI from './pages/StandardTokenURI';
+
+const Home = () => (
+  <Box sx={{ textAlign: 'center', mt: 8 }}>
+  <Typography variant="h3" component="h1" gutterBottom>
+    Welcome to NFT Donation!
+  </Typography>
+
+  <Typography variant="h6" color="text.secondary">
+    Revolutionizing education funding through transparent blockchain donations and meaningful NFTs.
+  </Typography>
+
+  <Typography variant="body1" sx={{ mt: 4 }}>
+    NFT Donation is a decentralized platform that connects donors, students,vendors and educational foundations 
+    to create a transparent and impactful giving experience. Every donation is traceable on the blockchain 
+    and student on approval is rewarded with a unique NFT — a digital badge that helps to buy your needs.
+  </Typography>
+
+  <Typography variant="body1" sx={{ mt: 2 }}>
+    Use the navigation menu above to explore active campaigns, make donations with purpose, register as a student 
+    seeking support, or log in as a foundation or vendor to manage campaigns and disbursements.
+  </Typography>
+
+  <Typography variant="body1" sx={{ mt: 2 }}>
+    Together, we're building a future where educational support is accessible, transparent, and driven by community trust.
+  </Typography>
+</Box>
+
+);
+
+const Footer = () => (
+  <Box sx={{ mt: 'auto', py: 3, bgcolor: 'primary.main', color: 'black', textAlign: 'center' }}>
+    <Typography variant="body2">
+      © {new Date().getFullYear()} NFT Donation. All rights reserved.
+    </Typography>
+  </Box>
+);
+
+const AppRoutes = () => {
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <Container maxWidth="lg" sx={{ flexGrow: 1, py: 4 }}>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/register" element={<RegisterStudentMUI />} />
+          <Route path="/register-student" element={<RegisterStudentMUI />} />
+          <Route path="/campaigns" element={<CampaignDetailMUI />} />
+          <Route path="/campaign/:id" element={<CampaignDetailMUI />} />
+
+          {/* Admin Routes */}
+          <Route path="/admin/dashboard" element={<AdminDashboardMUI />} />
+          <Route path="/admin/campaigns" element={<AdminCampaigns />} />
+          <Route path="/campaigns/:id" element={<CampaignDetailMUI />} />
+          <Route path="/admin/students" element={<AdminStudents />} />
+          <Route path="/admin/vendors" element={<AdminVendors />} />
+
+          {/* Donor Routes */}
+          <Route path="/donor/campaigns" element={<DonorCampaigns />} />
+          <Route path="/donor/donations" element={<DonorDonations />} />
+          <Route path="/donor/nfts" element={<DonorNFTs />} />
+          <Route path="/donate" element={<DonorDashboard />} />
+
+          {/* Student Routes */}
+          {/* <Route path="/student/dashboard" element={<StudentDashboard />} /> */}
+          <Route path="/student/campaigns" element={<StudentCampaigns />} />
+          <Route path="/student/profile" element={<StudentProfile />} />
+          <Route path="/student/nfts" element={<StudentNFTs />} />
+
+          {/* Vendor Routes */}
+          <Route path="/vendor/dashboard" element={<VendorDashboard />} />
+          <Route path="/vendor/transactions" element={<VendorTransactions />} />
+          <Route path="/vendor/profile" element={<VendorProfile />} />
+          <Route path="/vendor/campaigns" element={<VendorCampaigns />} />
+
+
+          {/* NFT Routes */}
+          <Route path="/my-nfts" element={<MyNFTsMUI />} />
+
+          {/* View Functions Route */}
+          <Route path="/view-functions" element={<ViewFunctions />} />
+
+          {/* Token URI by Standard Route */}
+          <Route path="/token-uri/:standard" element={<StandardTokenURI />} />
+        </Routes>
+      </Container>
+      <Footer />
+    </Box>
+  );
+};
+
+export default AppRoutes; 
