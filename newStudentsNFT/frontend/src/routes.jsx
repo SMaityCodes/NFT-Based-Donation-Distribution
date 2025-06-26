@@ -28,6 +28,7 @@ import MyNFTsMUI from './pages/MyNFTsMUI';
 import ViewFunctions from './pages/ViewFunctions';
 import VendorCampaigns from './pages/vendor/VendorCampaigns';
 import StandardTokenURI from './pages/StandardTokenURI';
+import DonorDashboard from './pages/DonorDashboard';
 
 const Home = () => (
   <Box sx={{ textAlign: 'center', mt: 8 }}>
@@ -84,6 +85,8 @@ const AppRoutes = () => {
           <Route path="/admin/students" element={<AdminStudents />} />
           <Route path="/admin/vendors" element={<AdminVendors />} />
 
+          <Route path="/donate" element={<DonorDashboard/>} />
+          
 
           {/* Student Routes */}
           <Route path="/student/campaigns" element={<StudentCampaigns />} />
