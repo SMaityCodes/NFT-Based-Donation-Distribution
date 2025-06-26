@@ -4,7 +4,7 @@ A decentralized platform that revolutionizes education funding through transpare
 
 ## 🎯 Project Overview
 
-The NFT-Based Donation Distribution System is a full-stack web application that leverages blockchain technology to:
+The NFT-Based Donation Distribution System is a full-stack web3 application that leverages blockchain technology to:
 
 - **Transparent Donations**: Every donation is traceable on the blockchain
 - **Student NFTs**: Approved students receive unique NFTs that can be used for educational purchases
