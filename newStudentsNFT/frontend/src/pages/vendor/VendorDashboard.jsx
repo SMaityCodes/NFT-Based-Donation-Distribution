@@ -29,7 +29,7 @@ import {
   InputLabel
 } from '@mui/material';
 import useWeb3Store from '../../store/web3Store';
-import { toast } from 'react-hot-toast';
+import { toast } from 'react-toastify';
 import {
   Store as StoreIcon,
   Refresh as RefreshIcon,
@@ -417,11 +417,6 @@ const VendorDashboard = () => {
             >
               Verify NFT
             </Button> */}
-          <Tooltip title="Refresh Data">
-            <IconButton onClick={() => fetchAllData()} sx={{ color: 'white' }}>
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
           <Button
             variant="contained"
             color="inherit"
@@ -441,7 +436,7 @@ const VendorDashboard = () => {
       </Paper>
 
       {/* Debug Section - Remove in production */}
-      {process.env.NODE_ENV === 'development' && (
+      {/* {process.env.NODE_ENV === 'development' && (
         <Paper sx={{ p: 2, mb: 3, backgroundColor: '#f5f5f5' }}>
           <Typography variant="h6" gutterBottom>Debug Info</Typography>
           <Typography variant="body2" component="pre" sx={{ fontSize: '12px', overflow: 'auto' }}>
@@ -457,7 +452,7 @@ const VendorDashboard = () => {
             }, 2)}
           </Typography>
         </Paper>
-      )}
+      )} */}
 
       {/* Profile Information */}
       <Grid container spacing={3} >
@@ -554,11 +549,6 @@ const VendorDashboard = () => {
                               <Typography variant="body2" component="span" display="block">
                                 Amount: {nft.amount} ETH
                               </Typography>
-                              {nft.tokenURI && (
-                                <Typography variant="body2" component="span" display="block">
-                                  Token URI: <a href={nft.tokenURI} target="_blank" rel="noopener noreferrer">{nft.tokenURI}</a>
-                                </Typography>
-                              )}
                               {nft.standard !== undefined && (
                                 <Button
                                   variant="outlined"

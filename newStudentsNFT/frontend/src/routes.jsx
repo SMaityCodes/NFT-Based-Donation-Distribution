@@ -9,13 +9,10 @@ import AdminStudents from './pages/admin/AdminStudents';
 import AdminVendors from './pages/admin/AdminVendors';
 
 // Donor Pages
-import DonorDashboard from './pages/DonorDashboard';
-import DonorDonations from './pages/DonorDonations';
-import DonorCampaigns from './pages/donor/DonorCampaigns';
-import DonorNFTs from './pages/donor/DonorNFTs';
+
 
 // Student Pages
-import StudentDashboard from './pages/student/StudentDashboard';
+
 import StudentCampaigns from './pages/student/StudentCampaigns';
 import StudentProfile from './pages/student/StudentProfile';
 import StudentNFTs from './pages/student/StudentNFTs';
@@ -24,7 +21,6 @@ import RegisterStudentMUI from './pages/RegisterStudentMUI';
 // Vendor Pages
 import VendorDashboard from './pages/vendor/VendorDashboard';
 import VendorTransactions from './pages/vendor/VendorTransactions';
-import VendorProfile from './pages/vendor/VendorProfile';
 
 // Public Pages
 import CampaignDetailMUI from './pages/CampaignDetailMUI';
@@ -88,14 +84,8 @@ const AppRoutes = () => {
           <Route path="/admin/students" element={<AdminStudents />} />
           <Route path="/admin/vendors" element={<AdminVendors />} />
 
-          {/* Donor Routes */}
-          <Route path="/donor/campaigns" element={<DonorCampaigns />} />
-          <Route path="/donor/donations" element={<DonorDonations />} />
-          <Route path="/donor/nfts" element={<DonorNFTs />} />
-          <Route path="/donate" element={<DonorDashboard />} />
 
           {/* Student Routes */}
-          {/* <Route path="/student/dashboard" element={<StudentDashboard />} /> */}
           <Route path="/student/campaigns" element={<StudentCampaigns />} />
           <Route path="/student/profile" element={<StudentProfile />} />
           <Route path="/student/nfts" element={<StudentNFTs />} />
@@ -103,7 +93,6 @@ const AppRoutes = () => {
           {/* Vendor Routes */}
           <Route path="/vendor/dashboard" element={<VendorDashboard />} />
           <Route path="/vendor/transactions" element={<VendorTransactions />} />
-          <Route path="/vendor/profile" element={<VendorProfile />} />
           <Route path="/vendor/campaigns" element={<VendorCampaigns />} />
 
 

@@ -4,7 +4,7 @@ import {
   Box, Typography, Button, TextField, CircularProgress, Paper, List, ListItem, ListItemText, Chip, Grid, Link
 } from '@mui/material';
 import useWeb3Store from '../store/web3Store';
-import { toast } from 'react-hot-toast';
+import { toast } from 'react-toastify';
 import { ethers } from 'ethers';
 import { STANDARDS } from '../utils/constants';
 

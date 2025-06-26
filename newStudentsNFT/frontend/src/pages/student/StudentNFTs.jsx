@@ -11,7 +11,7 @@ import {
   Chip
 } from '@mui/material';
 import useWeb3Store from '../../store/web3Store';
-import { toast } from 'react-hot-toast';
+import { toast } from 'react-toastify';
 
 const StudentNFTs = () => {
   const { contract, account } = useWeb3Store();

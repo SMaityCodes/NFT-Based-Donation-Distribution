@@ -38,7 +38,7 @@ import {
   Info as InfoIcon,
 } from '@mui/icons-material';
 import useWeb3Store from '../../store/web3Store';
-import { toast } from 'react-hot-toast';
+import { toast } from 'react-toastify';
 import { ethers } from 'ethers';
 import { useNavigate } from 'react-router-dom';
 import { STANDARDS } from '../../utils/constants';

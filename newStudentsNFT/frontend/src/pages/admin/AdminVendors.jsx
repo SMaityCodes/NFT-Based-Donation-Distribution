@@ -28,7 +28,7 @@ import {
   InputLabel
 } from '@mui/material';
 import useWeb3Store from '../../store/web3Store';
-import { toast } from 'react-hot-toast';
+import { toast } from 'react-toastify';
 import {
   Store as StoreIcon,
   Add as AddIcon,

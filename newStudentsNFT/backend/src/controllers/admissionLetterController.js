@@ -45,10 +45,14 @@ exports.uploadAdmissionLetter = async (req, res) => {
     // Convert studentId to lowercase
     const studentAddress = studentId.toLowerCase();
 
-    // Upload to Cloudinary
+    // Upload to Cloudinary from memory buffer
     let cloudinaryResult;
     try {
-      cloudinaryResult = await cloudinary.uploader.upload(req.file.path, {
+      // Convert buffer to base64 for Cloudinary
+      const base64File = req.file.buffer.toString('base64');
+      const dataURI = `data:${req.file.mimetype};base64,${base64File}`;
+      
+      cloudinaryResult = await cloudinary.uploader.upload(dataURI, {
         folder: 'admission-letters',
         resource_type: 'auto'
       });
@@ -71,7 +75,6 @@ exports.uploadAdmissionLetter = async (req, res) => {
       studentId: studentAddress,
       campaignId,
       fileName: req.file.originalname,
-      filePath: req.file.path,
       cloudinaryUrl: cloudinaryResult.secure_url,
       cloudinaryPublicId: cloudinaryResult.public_id,
       hash: hash
@@ -89,7 +92,7 @@ exports.uploadAdmissionLetter = async (req, res) => {
           {
             campaignId,
             fileName: req.file.originalname,
-            filePath: req.file.path,
+            filePath: null, // No local file path since using memory storage
             fileUrl: cloudinaryResult.secure_url,
             cloudinaryPublicId: cloudinaryResult.public_id,
             hash: hash,
@@ -105,7 +108,7 @@ exports.uploadAdmissionLetter = async (req, res) => {
           studentId: studentAddress,
           campaignId,
           fileName: req.file.originalname,
-          filePath: req.file.path,
+          filePath: null, // No local file path since using memory storage
           fileUrl: cloudinaryResult.secure_url,
           cloudinaryPublicId: cloudinaryResult.public_id,
           hash: hash
@@ -123,13 +126,11 @@ exports.uploadAdmissionLetter = async (req, res) => {
       });
     } catch (dbError) {
       console.error('Database error:', dbError);
-      // If there's a database error, try to clean up the uploaded file
+      // If there's a database error, try to clean up from Cloudinary
       try {
-        await fs.unlink(req.file.path);
-        // Also delete from Cloudinary
         await cloudinary.uploader.destroy(cloudinaryResult.public_id);
-      } catch (unlinkError) {
-        console.error('Error deleting file after database error:', unlinkError);
+      } catch (cloudinaryError) {
+        console.error('Error deleting file from Cloudinary after database error:', cloudinaryError);
       }
       throw dbError;
     }

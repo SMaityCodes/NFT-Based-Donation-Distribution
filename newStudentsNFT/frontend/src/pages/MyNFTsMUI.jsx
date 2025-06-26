@@ -3,7 +3,7 @@ import {
   Box, Typography, CircularProgress, Grid, Card, CardContent, CardActions, Button, Link
 } from '@mui/material';
 import useWeb3Store from '../store/web3Store';
-import { toast } from 'react-hot-toast';
+import { toast } from 'react-toastify';
 import { STANDARDS } from '../utils/constants';
 import { getNFTMetadataUrl } from '../utils/nftUtils';
 

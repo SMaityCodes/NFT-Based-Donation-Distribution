@@ -6,7 +6,7 @@ import {
 } from '@mui/material';
 import useWeb3Store from '../store/web3Store';
 import { STANDARDS } from '../utils/constants';
-import { toast } from 'react-hot-toast';
+import { toast } from 'react-toastify';
 import { ethers } from 'ethers';
 import CampaignDetailsMUI from '../components/CampaignDetailsMUI'; // Re-use the separate component
 import { useAuth } from '../context/AuthContext';

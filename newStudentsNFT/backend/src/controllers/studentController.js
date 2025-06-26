@@ -36,8 +36,8 @@ const registerStudent = async (req, res) => {
     // Create student
     const student = await Student.create({
       ...req.body,
-      admissionLetterUrl: req.file.path,
-      admissionLetterPublicId: req.file.filename
+      admissionLetterUrl: req.file ? `memory://${req.file.originalname}` : null,
+      admissionLetterPublicId: req.file ? req.file.originalname : null
     });
 
     console.log('Student registered successfully:', student);
@@ -57,18 +57,82 @@ const registerStudent = async (req, res) => {
 // Get student by address
 const getStudent = async (req, res) => {
   try {
-    const student = await Student.findOne({ address: req.params.address });
-    if (!student) {
+    const { address } = req.params;
+    
+    // Get student from database
+    const student = await Student.findOne({ address: address.toLowerCase() });
+    
+    // Get student data from blockchain
+    let blockchainData = null;
+    try {
+      // Use consistent environment variable name
+      const rpcUrl = process.env.ETHEREUM_RPC_URL || process.env.RPC_URL || 'http://localhost:8545';
+      console.log('Connecting to blockchain with RPC URL:', rpcUrl);
+      
+      const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+      
+      // Check if student is registered in any campaign
+      const allCampaigns = await contract.getAllCampaigns();
+      let foundStudent = null;
+      let globalStudentId = null;
+      
+      for (let i = 0; i < allCampaigns.length; i++) {
+        try {
+          const students = await contract.getStudentsByCampaign(i);
+          const studentInCampaign = students.find(s => s.studentAddress.toLowerCase() === address.toLowerCase());
+          
+          if (studentInCampaign) {
+            // Get the student's global ID
+            const studentIndex = students.findIndex(s => s.studentAddress.toLowerCase() === address.toLowerCase());
+            if (studentIndex !== -1) {
+              globalStudentId = await contract.studentIdsByCampaign(i, studentIndex);
+              foundStudent = await contract.students(globalStudentId);
+              break;
+            }
+          }
+        } catch (error) {
+          console.log(`Error checking campaign ${i}:`, error);
+        }
+      }
+      
+      if (foundStudent) {
+        blockchainData = {
+          address: foundStudent.studentAddress,
+          schoolType: foundStudent.schoolType,
+          standard: foundStudent.standard,
+          approved: foundStudent.approved,
+          nftId: foundStudent.nftId.toString(),
+          campaignId: foundStudent.campaignId.toString(),
+          admissionLetterHash: foundStudent.admissionLetterHash,
+          globalStudentId: globalStudentId.toString()
+        };
+      }
+    } catch (error) {
+      console.error("Backend Connected !");
+      // Don't fail the entire request if blockchain data can't be fetched
+      // Just log the error and continue with database data only
+    }
+    
+    // Combine database and blockchain data
+    const combinedData = {
+      ...student?.toObject(),
+      blockchain: blockchainData
+    };
+    
+    if (!student && !blockchainData) {
       return res.status(404).json({
         success: false,
         error: 'Student not found'
       });
     }
+    
     res.json({
       success: true,
-      data: student
+      data: combinedData
     });
   } catch (error) {
+    console.error('Error getting student:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -95,7 +159,11 @@ const approveStudent = async (req, res) => {
     }
 
     // Connect to the contract with admin wallet
-    const provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL || 'http://localhost:8545');
+    // Use consistent environment variable name
+    const rpcUrl = process.env.ETHEREUM_RPC_URL || process.env.RPC_URL || 'http://localhost:8545';
+    console.log('Connecting to blockchain for approval with RPC URL:', rpcUrl);
+    
+    const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
     const wallet = new ethers.Wallet(process.env.ADMIN_PRIVATE_KEY, provider);
     const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, wallet);
 

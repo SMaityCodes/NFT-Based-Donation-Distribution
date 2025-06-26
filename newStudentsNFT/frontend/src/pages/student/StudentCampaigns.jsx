@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import useWeb3Store from '../../store/web3Store';
 import { ethers } from 'ethers';
-import { toast } from 'react-hot-toast';
+import { toast } from 'react-toastify';
 
 const StudentCampaigns = () => {
   const { contract, account } = useWeb3Store();

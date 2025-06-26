@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Heading, Text, SimpleGrid, Card, CardHeader, CardBody, Button, Spinner, Center, Link } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
 import useWeb3Store from '../store/web3Store';
-import { toast } from 'react-hot-toast';
+import { toast } from 'react-toastify';
 import { ethers } from 'ethers'; // For formatting Eth
 
 const Home = () => {
