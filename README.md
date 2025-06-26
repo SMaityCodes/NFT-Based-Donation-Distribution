@@ -4,8 +4,6 @@ A decentralized platform that revolutionizes education funding through transpare
 
 ## 🎯 Project Overview
 
-The CampaignNFT system is a full-stack web application that leverages blockchain technology to:
-
 - **Transparent Donations**: Every donation is traceable on the blockchain
 - **Student NFTs**: Approved students receive unique NFTs that can be used for educational purchases
 - **Multi-Role System**: Supports donors, students, vendors, and administrators (foundation)
@@ -74,7 +72,7 @@ npm install
 cp .env.example .env
 ```
 
-Configure your `.env` file with your specific configuration values.
+Configure your `.env` file with your specific configuration values (such as MongoDB URI, JWT secret, etc.).
 
 ### 3. Frontend Setup
 
@@ -88,7 +86,7 @@ npm install
 cp .env.example .env
 ```
 
-Configure your `.env` file with your specific configuration values.
+Configure your `.env` file with your specific configuration values (such as backend API URL, contract address, etc.).
 
 ### 4. Start the Application
 
@@ -111,108 +109,85 @@ The application will be available at:
 ## 👥 User Roles & Features
 
 ### 🎓 Students
-- **Registration**: Register for campaigns with admission letters
-- **Profile Management**: View and update student information
-- **NFT Collection**: View minted NFTs and their usage history
-- **Campaign Browsing**: Explore available educational campaigns
-- **NFT Usage**: Use NFTs for educational purchases from approved vendors
+- Register for campaigns with admission letters
+- View minted NFTs and their usage history
+- Explore available educational campaigns
+- Use NFTs for educational purchases from approved vendors
 
 ### 💰 Donors
-- **Campaign Discovery**: Browse and search for campaigns
-- **Donation Tracking**: View donation history and impact
-- **Transparency**: Track how donations are used
-- **Real-time Donations**: Make donations directly to campaigns
-- **Donation History**: View all donations across campaigns
+- Browse and search for campaigns
+- Track how donations are used
+- Make donations directly to campaigns
+- View all donations across campaigns
 
 ### 🏪 Vendors
-- **Registration**: Register as approved educational vendors (admin only)
-- **Transaction Management**: Process NFT-based transactions
-- **Verification**: Verify student NFTs for purchases
-- **Profile Management**: Update vendor information
-- **Transaction History**: Track all NFT transactions processed
-- **Item Provision**: Record items provided for NFT exchanges
+- Register as approved educational vendors (admin only)
+- Process NFT-based transactions
+- Verify student NFTs for purchases
+- Track all NFT transactions processed
+- Record items provided for NFT exchanges
 
 ### 👨‍💼 Foundation (Administrators)
-- **Campaign Management**: Create and manage funding campaigns
-- **Student Approval**: Review and approve student applications
-- **Vendor Management**: Register and manage approved vendors
-- **System Monitoring**: Monitor donations and NFT usage
-- **Campaign Balance**: Monitor campaign funding levels
-- **Donor Analytics**: View comprehensive donor statistics
-- **Admission Letter Management**: Review and approve student documents
+- Create and manage funding campaigns
+- Review and approve student applications
+- Register and manage approved vendors
+- Monitor donations and NFT usage
+- Monitor campaign funding levels
+- View comprehensive donor statistics
+- Review and approve student documents
 
-## 🔧 Smart Contract Features (CampaignNFT)
+## 🔧 Smart Contract Features (StudentFund3.sol)
 
 ### Campaign Management
 ```solidity
-function createCampaign(
-    string memory name,
-    string[] memory allowedSchoolTypes,
-    Standard[] memory allowedStandards
-) external onlyOwner
-
-function getAllCampaigns() external view returns (Campaign[] memory)
+function createCampaign(string memory name, string[] memory allowedSchoolTypes, Standard[] memory allowedStandards) external onlyOwner;
+function getAllCampaigns() external view returns (Campaign[] memory);
 ```
 
 ### Donation System
 ```solidity
-function donateToCampaign(uint campaignId) external payable
-
-function getDonorsByCampaign(uint campaignId) external view returns (Donor[] memory)
-
-function getAllDonorsWithCampaignAmounts() external view onlyOwner returns (
-    address[] memory donorAddresses,
-    uint[] memory totalDonatedAmounts,
-    uint[][] memory donatedPerCampaign
-)
+function donateToCampaign(uint campaignId) external payable;
+function getAllDonorsWithCampaignAmounts() external view onlyOwner returns (address[] memory donorAddresses, uint[] memory totalDonatedAmounts, uint[][] memory donatedPerCampaign);
 ```
 
-### Student Registration
+### Student Registration & Approval
 ```solidity
-function registerForCampaign(
-    uint campaignId,
-    string memory studentSchoolType,
-    Standard studentStandard,
-    bytes32 admissionLetterHash
-) external
-
-function getStudentsByCampaign(uint campaignId) external view returns (Student[] memory)
+function registerForCampaign(uint campaignId, string memory studentSchoolType, Standard studentStandard, bytes32 admissionLetterHash) external;
+function approveStudent(uint studentId) external onlyOwner;
+function getStudentsByCampaign(uint campaignId) external view returns (Student[] memory);
 ```
 
 ### NFT Minting & Management
 ```solidity
-function approveStudent(uint studentId) external onlyOwner
-
-function setStandardTokenURITemplates() external onlyOwner
-
-function getNFTDetails(uint nftId) external view returns (
-    Standard standard,
-    uint amount,
-    bool isUsed,
-    address currentOwner
-)
+function setStandardTokenURITemplates() external onlyOwner;
+function getNFTDetails(uint nftId) external view returns (Standard standard, uint amount, bool isUsed, address currentOwner);
 ```
 
 ### Vendor Transactions
 ```solidity
-function verifyAndUseNFT(uint nftId, string memory itemProvided) external
-
-function getVendorTransaction(uint nftId) external view returns (
-    uint,
-    address,
-    string memory,
-    uint
-)
+function verifyAndUseNFT(uint nftId, string memory itemProvided) external;
+function getVendorTransaction(uint nftId) external view returns (VendorTransaction memory);
 ```
 
-### Campaign Analytics
+### Vendor Management
 ```solidity
-function getCampaignBalance(uint campaignId) external view onlyOwner returns (uint)
-
-function getDonorsWithAmountsByCampaign(uint campaignId) external view onlyOwner returns (address[] memory, uint[] memory)
-
-function getApprovedStudentsByCampaign(uint campaignId) external view returns (Student[] memory)
+function registerVendor(address vendorAddress) external onlyOwner;
+function approveVendor(address vendorAddress) external onlyOwner;
 ```
+
+### Additional Features
+- Predefined funding amounts for each educational standard
+- Admission letter verification for student registration
+- NFT usage tracking and vendor transaction logging
+
+## 📄 Notes
+- All blockchain interactions are handled via the smart contract. 
+- Go to Remix and Save the StudentFund3.sol file from this repo, if you get a warning go to Solidity Compiler and click on Advanced Configuration then you will find a checkbox named Optimization, click it
+- Now Go to Deploy and change the Environment to Injected Provider - Metamask
+- Deploy the contract then You will get a contract Address paste the contract address in the .env file
+
+## 📬 Contact
+For questions or support, please open an issue or contact the project maintainers.
 
 ## 📁 Project Structure
 
@@ -231,7 +206,7 @@ NFT-Based-Donation-Distribution/
 │   │   │   ├── services/        # Business logic and blockchain services
 │   │   │   ├── app.js           # Express app configuration
 │   │   │   └── server.js        # Express server setup
-│   │   ├── uploads/             # File upload directory
+│   │   |
 │   │   └── package.json
 │   └── frontend/
 │       ├── src/
@@ -268,27 +243,6 @@ NFT-Based-Donation-Distribution/
 5. Add pages in `frontend/src/pages/`
 6. Update routing in `frontend/src/routes.jsx`
 
-### Testing
-```bash
-# Backend tests
-cd newStudentsNFT/backend
-npm test
-
-# Frontend tests
-cd newStudentsNFT/frontend
-npm test
-```
-
-### Building for Production
-```bash
-# Backend
-cd newStudentsNFT/backend
-npm run build
-
-# Frontend
-cd newStudentsNFT/frontend
-npm run build
-```
 
 ## 🔗 Blockchain Integration
 
@@ -303,99 +257,35 @@ npm run build
 - MetaMask integration for wallet connectivity
 - Real-time donation tracking and NFT management
 
-## 📊 Database Schema
 
-### Student Model
-```javascript
-{
-  address: String,           // Ethereum address
-  schoolType: String,        // Government/Private/International
-  standard: Number,          // Grade level
-  campaignId: Number,        // Associated campaign
-  admissionLetterUrl: String, // Document URL
-  approved: Boolean,         // Approval status
-  nftMinted: Boolean,        // NFT minting status
-  nftId: Number             // NFT token ID
-}
-```
 
-### Campaign Model
-```javascript
-{
-  name: String,              // Campaign name
-  description: String,       // Campaign description
-  targetAmount: Number,      // Funding target
-  raisedAmount: Number,      // Current raised amount
-  active: Boolean,           // Campaign status
-  allowedSchoolTypes: [String], // Eligible school types
-  allowedStandards: [Number],   // Eligible grade levels
-  donors: [Object]           // Donor information
-}
-```
-
-### NFT Metadata Model
-```javascript
-{
-  tokenId: Number,           // NFT token ID
-  name: String,              // NFT name
-  description: String,       // NFT description
-  image: String,             // NFT image URL
-  attributes: [Object],      // NFT attributes
-  standard: String,          // Educational standard
-  amount: Number,            // Funding amount
-  studentAddress: String     // Student's address
-}
-```
-
-### Vendor Transaction Model
-```javascript
-{
-  nftId: Number,             // NFT token ID
-  studentAddress: String,    // Student's address
-  itemProvided: String,      // Item/service provided
-  timestamp: Date,           // Transaction timestamp
-  vendorAddress: String      // Vendor's address
-}
-```
 
 ## 🎓 Educational Standards & Funding
 
 The system supports multiple educational standards with predefined funding amounts:
 
 ### Primary Education (Standards 1-5)
-- Primary 1-2: ₹1,000 each
-- Primary 3-4: ₹1,500 each  
-- Primary 5: ₹2,000
+- Primary 1-2: ₹10000 
+- Primary 3-4: ₹15000 
+- Primary 5: ₹20000
 
 ### Middle Education (Standards 6-8)
-- Middle 6-7: ₹2,500 each
-- Middle 8: ₹3,000
+- Middle 6-7: ₹25000
+- Middle 8: ₹30000
 
 ### High School (Standards 9-10)
-- High 9: ₹3,500
-- High 10: ₹4,000
+- High 9: ₹35000
+- High 10: ₹40000
 
 ### Intermediate (Standards 11-12)
-- Inter 11: ₹4,500
-- Inter 12: ₹5,000
+- Inter 11: ₹45000
+- Inter 12: ₹50000
 
 ### BTech (Years 1-4)
-- BTech 1: ₹8,000
-- BTech 2: ₹8,500
-- BTech 3: ₹9,000
-- BTech 4: ₹10,000
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- BTech 1: ₹80000
+- BTech 2: ₹85000
+- BTech 3: ₹90000
+- BTech 4: ₹100000
 
 ## 🆘 Support
 
@@ -404,23 +294,7 @@ For support and questions:
 - Check the documentation in the code comments
 - Review the smart contract functions
 
-## 🔮 Future Enhancements
-
-- [ ] Mobile application
-- [ ] Advanced analytics dashboard
-- [ ] Multi-chain support
-- [ ] Automated NFT metadata generation
-- [ ] Integration with educational institutions
-- [ ] Advanced vendor marketplace
-- [ ] Real-time notifications
-- [ ] Advanced reporting features
-- [ ] Batch NFT minting
-- [ ] Automated campaign funding distribution
-- [ ] Integration with traditional payment systems
-- [ ] Advanced IPFS integration for metadata storage
-- [ ] Multi-language support
-- [ ] Advanced role-based access control
 
 ---
 
-**Built with ❤️ for transparent education funding**
+**Built with Love for transparent education funding**
