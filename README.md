@@ -1,16 +1,17 @@
-# NFT-Based Donation Distribution System
+# CampaignNFT - NFT-Based Educational Donation System
 
 A decentralized platform that revolutionizes education funding through transparent blockchain donations and meaningful NFTs. This system connects donors, students, vendors, and educational foundations to create a transparent and impactful giving experience.
 
 ## 🎯 Project Overview
 
-The NFT-Based Donation Distribution System is a full-stack web3 application that leverages blockchain technology to:
-
 - **Transparent Donations**: Every donation is traceable on the blockchain
 - **Student NFTs**: Approved students receive unique NFTs that can be used for educational purchases
-- **Multi-Role System**: Supports donors, students, vendors, and administrators
+- **Multi-Role System**: Supports donors, students, vendors, and administrators (foundation)
 - **Campaign Management**: Create and manage educational funding campaigns
 - **Vendor Integration**: Connect students with approved vendors for educational purchases
+- **Donation Tracking**: Real-time tracking of campaign donations and donor contributions
+- **NFT Usage Management**: Track NFT usage and vendor transactions
+- **Standard-Based Funding**: Predefined funding amounts for different educational standards
 
 ## 🏗️ System Architecture
 
@@ -21,23 +22,29 @@ The NFT-Based Donation Distribution System is a full-stack web3 application that
 - **Routing**: React Router DOM
 - **Web3 Integration**: Ethers.js for blockchain interaction
 - **Styling**: Material-UI theming with dark/light mode support
+- **Notifications**: React Toastify for user feedback
 
 ### Backend (Node.js + Express)
 - **Runtime**: Node.js with Express.js
 - **Database**: MongoDB with Mongoose ODM
-- **Authentication**: JWT tokens with bcryptjs
+- **Authentication**: JWT tokens with wallet-based authentication
 - **File Upload**: Multer with Cloudinary integration
 - **Blockchain**: Ethers.js for smart contract interaction
 - **CORS**: Configured for cross-origin requests
 
 ### Smart Contract (Solidity)
 - **Standard**: ERC-721 (NFT) with OpenZeppelin contracts
+- **Contract Name**: `CampaignNFT` (StudentFund3.sol)
 - **Features**: 
   - Campaign creation and management
   - Student registration and approval
   - NFT minting for approved students
   - Vendor registration and verification
-  - NFT usage tracking
+  - NFT usage tracking and vendor transactions
+  - Donation management and tracking
+  - Campaign balance management
+  - Standard-based funding amounts
+  - IPFS metadata templates for different educational standards
 
 ## 🚀 Quick Start
 
@@ -65,26 +72,7 @@ npm install
 cp .env.example .env
 ```
 
-Configure your `.env` file:
-```env
-# Database
-MONGODB_URI=mongodb://localhost:27017/students-nft
-
-# JWT
-JWT_SECRET=your_jwt_secret_here
-
-# Blockchain
-CONTRACT_ADDRESS=your_deployed_contract_address
-RPC_URL=your_ethereum_rpc_url
-
-# Cloudinary (for file uploads)
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-
-# Server
-PORT=3001
-```
+Configure your `.env` file with your specific configuration values (such as MongoDB URI, JWT secret, etc.).
 
 ### 3. Frontend Setup
 
@@ -98,12 +86,7 @@ npm install
 cp .env.example .env
 ```
 
-Configure your `.env` file:
-```env
-VITE_API_URL=http://localhost:3001/api
-VITE_CONTRACT_ADDRESS=your_deployed_contract_address
-VITE_RPC_URL=your_ethereum_rpc_url
-```
+Configure your `.env` file with your specific configuration values (such as backend API URL, contract address, etc.).
 
 ### 4. Start the Application
 
@@ -126,115 +109,129 @@ The application will be available at:
 ## 👥 User Roles & Features
 
 ### 🎓 Students
-- **Registration**: Register for campaigns with admission letters
-- **Profile Management**: View and update student information
-- **NFT Collection**: View minted NFTs and their usage history
-- **Campaign Browsing**: Explore available educational campaigns
+- Register for campaigns with admission letters
+- View minted NFTs and their usage history
+- Explore available educational campaigns
+- Use NFTs for educational purchases from approved vendors
 
 ### 💰 Donors
-- **Campaign Discovery**: Browse and search for campaigns
-- **Donation Tracking**: View donation history and impact
-- **NFT Collection**: Collect NFTs from supported campaigns
-- **Transparency**: Track how donations are used
+- Browse and search for campaigns
+- Track how donations are used
+- Make donations directly to campaigns
+- View all donations across campaigns
 
 ### 🏪 Vendors
-- **Registration**: Register as approved educational vendors
-- **Transaction Management**: Process NFT-based transactions
-- **Verification**: Verify student NFTs for purchases
-- **Profile Management**: Update vendor information
+- Register as approved educational vendors (admin only)
+- Process NFT-based transactions
+- Verify student NFTs for purchases
+- Track all NFT transactions processed
+- Record items provided for NFT exchanges
 
-### 👨‍💼 Administrators
-- **Campaign Management**: Create and manage funding campaigns
-- **Student Approval**: Review and approve student applications
-- **Vendor Management**: Register and manage approved vendors
-- **System Monitoring**: Monitor donations and NFT usage
+### 👨‍💼 Foundation (Administrators)
+- Create and manage funding campaigns
+- Review and approve student applications
+- Register and manage approved vendors
+- Monitor donations and NFT usage
+- Monitor campaign funding levels
+- View comprehensive donor statistics
+- Review and approve student documents
 
-## 🔧 Smart Contract Features
+## 🔧 Smart Contract Features (StudentFund3.sol)
 
 ### Campaign Management
 ```solidity
-function createCampaign(
-    string memory name,
-    string[] memory allowedSchoolTypes,
-    Standard[] memory allowedStandards
-) external onlyOwner
+function createCampaign(string memory name, string[] memory allowedSchoolTypes, Standard[] memory allowedStandards) external onlyOwner;
+function getAllCampaigns() external view returns (Campaign[] memory);
 ```
 
-### Student Registration
+### Donation System
 ```solidity
-function registerForCampaign(
-    uint campaignId,
-    string memory studentSchoolType,
-    Standard studentStandard,
-    bytes32 admissionLetterHash
-) external
+function donateToCampaign(uint campaignId) external payable;
+function getAllDonorsWithCampaignAmounts() external view onlyOwner returns (address[] memory donorAddresses, uint[] memory totalDonatedAmounts, uint[][] memory donatedPerCampaign);
 ```
 
-### NFT Minting
+### Student Registration & Approval
 ```solidity
-function approveStudent(uint studentId, string memory tokenURII) external onlyOwner
+function registerForCampaign(uint campaignId, string memory studentSchoolType, Standard studentStandard, bytes32 admissionLetterHash) external;
+function approveStudent(uint studentId) external onlyOwner;
+function getStudentsByCampaign(uint campaignId) external view returns (Student[] memory);
 ```
 
-### Vendor Verification
+### NFT Minting & Management
 ```solidity
-function verifyAndUseNFT(uint nftId) external
+function setStandardTokenURITemplates() external onlyOwner;
+function getNFTDetails(uint nftId) external view returns (Standard standard, uint amount, bool isUsed, address currentOwner);
 ```
+
+### Vendor Transactions
+```solidity
+function verifyAndUseNFT(uint nftId, string memory itemProvided) external;
+function getVendorTransaction(uint nftId) external view returns (VendorTransaction memory);
+```
+
+### Vendor Management
+```solidity
+function registerVendor(address vendorAddress) external onlyOwner;
+function approveVendor(address vendorAddress) external onlyOwner;
+```
+
+### Additional Features
+- Predefined funding amounts for each educational standard
+- Admission letter verification for student registration
+- NFT usage tracking and vendor transaction logging
+
+## 📄 Notes
+- All blockchain interactions are handled via the smart contract. 
+- Go to Remix and Save the StudentFund3.sol file from this repo, if you get a warning go to Solidity Compiler and click on Advanced Configuration then you will find a checkbox named Optimization, click it
+- Now Go to Deploy and change the Environment to Injected Provider - Metamask
+- Deploy the contract then You will get a contract Address paste the contract address in the .env file
+
+## 📬 Contact
+For questions or support, please open an issue or contact the project maintainers.
 
 ## 📁 Project Structure
 
 ```
-newStudentsNFT/
-├── backend/
-│   ├── src/
-│   │   ├── config/          # Database and contract configuration
-│   │   ├── controllers/     # API route handlers
-│   │   ├── middleware/      # Authentication and upload middleware
-│   │   ├── models/          # MongoDB schemas
-│   │   ├── routes/          # API routes
-│   │   ├── services/        # Business logic and blockchain services
-│   │   └── server.js        # Express server setup
-│   ├── uploads/             # File upload directory
-│   └── package.json
-├── frontend/
-│   ├── src/
-│   │   ├── components/      # Reusable UI components
-│   │   ├── context/         # React context providers
-│   │   ├── pages/           # Page components
-│   │   ├── store/           # Zustand state management
-│   │   ├── utils/           # Utility functions
-│   │   └── App.jsx          # Main application component
-│   └── package.json
+NFT-Based-Donation-Distribution/
+├── Practice/
+│   └── StudentFund3.sol          # Main smart contract (CampaignNFT)
+├── newStudentsNFT/
+│   ├── backend/
+│   │   ├── src/
+│   │   │   ├── config/          # Database and contract configuration
+│   │   │   ├── controllers/     # API route handlers
+│   │   │   ├── middleware/      # Authentication and upload middleware
+│   │   │   ├── models/          # MongoDB schemas
+│   │   │   ├── routes/          # API routes
+│   │   │   ├── services/        # Business logic and blockchain services
+│   │   │   ├── app.js           # Express app configuration
+│   │   │   └── server.js        # Express server setup
+│   │   |
+│   │   └── package.json
+│   └── frontend/
+│       ├── src/
+│       │   ├── components/      # Reusable UI components
+│       │   ├── context/         # React context providers
+│       │   ├── pages/           # Page components
+│       │   ├── store/           # Zustand state management
+│       │   ├── utils/           # Utility functions
+│       │   ├── theme.js         # Material-UI theme
+│       │   ├── routes.jsx       # Application routing
+│       │   ├── App.jsx          # Main application component
+│       │   └── main.jsx         # Application entry point
+│       └── package.json
+└── README.md
 ```
 
 ## 🔐 Security Features
 
 - **JWT Authentication**: Secure API access with JSON Web Tokens
-- **Password Hashing**: bcryptjs for secure password storage
+- **Wallet-Based Auth**: Ethereum wallet address verification
 - **File Upload Security**: Multer with file type validation
 - **CORS Protection**: Configured cross-origin request handling
 - **Input Validation**: Comprehensive request validation
 - **Blockchain Security**: Smart contract access controls
-
-## 🌐 API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `GET /api/auth/me` - Get current user
-
-### Campaigns
-- `GET /api/campaigns` - Get all campaigns
-- `POST /api/campaigns` - Create new campaign
-- `GET /api/campaigns/:id` - Get campaign details
-
-### Students
-- `POST /api/students` - Register student
-- `GET /api/students` - Get all students
-- `PUT /api/students/:id/approve` - Approve student
-
-### NFTs
-- `GET /api/nft/student/:address` - Get student NFTs
-- `POST /api/nft/mint` - Mint NFT for student
+- **NFT Usage Protection**: Single-use NFTs with transfer verification
 
 ## 🛠️ Development
 
@@ -246,100 +243,58 @@ newStudentsNFT/
 5. Add pages in `frontend/src/pages/`
 6. Update routing in `frontend/src/routes.jsx`
 
-### Testing
-```bash
-# Backend tests
-cd newStudentsNFT/backend
-npm test
-
-# Frontend tests
-cd newStudentsNFT/frontend
-npm test
-```
-
-### Building for Production
-```bash
-# Backend
-cd newStudentsNFT/backend
-npm run build
-
-# Frontend
-cd newStudentsNFT/frontend
-npm run build
-```
 
 ## 🔗 Blockchain Integration
 
 ### Smart Contract Deployment
-1. Deploy the `StudentFund.sol` contract to your preferred network
-2. Update `CONTRACT_ADDRESS` in environment variables
-3. Configure RPC URL for network connectivity
+1. Deploy the `Practice/StudentFund3.sol` contract to your preferred network
+2. Update contract configuration in environment variables
+3. Set up IPFS metadata templates for different educational standards
 
 ### Web3 Integration
 - Frontend uses Ethers.js for blockchain interaction
 - Backend provides blockchain service layer
 - MetaMask integration for wallet connectivity
+- Real-time donation tracking and NFT management
 
-## 📊 Database Schema
 
-### Student Model
-```javascript
-{
-  address: String,           // Ethereum address
-  schoolType: String,        // Government/Private/International
-  standard: Number,          // Grade level
-  campaignId: Number,        // Associated campaign
-  admissionLetterUrl: String, // Document URL
-  approved: Boolean,         // Approval status
-  nftMinted: Boolean,        // NFT minting status
-  nftId: Number             // NFT token ID
-}
-```
 
-### Campaign Model
-```javascript
-{
-  name: String,              // Campaign name
-  description: String,       // Campaign description
-  targetAmount: Number,      // Funding target
-  raisedAmount: Number,      // Current raised amount
-  active: Boolean,           // Campaign status
-  allowedSchoolTypes: [String], // Eligible school types
-  allowedStandards: [Number],   // Eligible grade levels
-  donors: [Object]           // Donor information
-}
-```
 
-## 🤝 Contributing
+## 🎓 Educational Standards & Funding
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+The system supports multiple educational standards with predefined funding amounts:
 
-## 📄 License
+### Primary Education (Standards 1-5)
+- Primary 1-2: ₹10000 
+- Primary 3-4: ₹15000 
+- Primary 5: ₹20000
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### Middle Education (Standards 6-8)
+- Middle 6-7: ₹25000
+- Middle 8: ₹30000
+
+### High School (Standards 9-10)
+- High 9: ₹35000
+- High 10: ₹40000
+
+### Intermediate (Standards 11-12)
+- Inter 11: ₹45000
+- Inter 12: ₹50000
+
+### BTech (Years 1-4)
+- BTech 1: ₹80000
+- BTech 2: ₹85000
+- BTech 3: ₹90000
+- BTech 4: ₹100000
 
 ## 🆘 Support
 
 For support and questions:
 - Create an issue in the repository
 - Check the documentation in the code comments
-- Review the API endpoints and smart contract functions
+- Review the smart contract functions
 
-## 🔮 Future Enhancements
-
-- [ ] Mobile application
-- [ ] Advanced analytics dashboard
-- [ ] Multi-chain support
-- [ ] Automated NFT metadata generation
-- [ ] Integration with educational institutions
-- [ ] Advanced vendor marketplace
-- [ ] Real-time notifications
-- [ ] Advanced reporting features
 
 ---
 
-**Built with ❤️ for transparent education funding**
+**Built with Love for transparent education funding**
