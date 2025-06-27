@@ -76,9 +76,14 @@ const DonorDashboard = () => {
   useEffect(() => {
     if (walletConnected && currentAccount) {
       initializeContract();
-      fetchData();
     }
   }, [walletConnected, currentAccount]);
+
+  useEffect(() => {
+    if (contract && walletConnected && currentAccount) {
+      fetchData();
+    }
+  }, [contract, walletConnected, currentAccount]);
 
   const checkWalletConnection = async () => {
     if (typeof window.ethereum !== 'undefined') {
@@ -535,14 +540,17 @@ const DonorDashboard = () => {
                     <ListItemText
                       primary={getCampaignName(donation.campaignId)}
                       secondary={
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">
-                            Amount: <Chip label={`${donation.amount} ETH`} size="small" color="success" />
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                        <span>
+                          <span style={{ color: 'rgba(0,0,0,0.6)', fontSize: '0.875rem' }}>
+                            Amount: <span style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+                              <Chip label={`${donation.amount} ETH`} size="small" color="success" component="span" />
+                            </span>
+                          </span>
+                          <br />
+                          <span style={{ color: 'rgba(0,0,0,0.6)', fontSize: '0.75rem' }}>
                             Transaction: {formatAddress(donation.txHash)}
-                          </Typography>
-                        </Box>
+                          </span>
+                        </span>
                       }
                     />
                     <Chip label="Completed" color="success" size="small" />
