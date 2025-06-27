@@ -685,7 +685,7 @@ const AdminStudents = () => {
         <DialogContent>
           {metaDetails ? (
             <>
-              <Typography>Minted By: {metaDetails.admin || 'N/A'}</Typography>
+              <Typography>Student Address: {metaDetails.admin || 'N/A'}</Typography>
               <Typography>Current Owner: {metaDetails.owner}</Typography>
               <Typography>Used: {metaDetails.used ? 'Yes' : 'No'}</Typography>
               <Typography>Item Provided: {metaDetails.itemProvided || 'N/A'}</Typography>
