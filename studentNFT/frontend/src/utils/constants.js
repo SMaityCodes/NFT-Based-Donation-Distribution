@@ -1,5 +1,5 @@
 // Replace with your actual contract address after deployment
-export const CONTRACT_ADDRESS = "0xcabb3fef2bda9df7e7866b5199e452cf4cb973bd";
+export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS ;
 
 // Replace with your contract's ABI
 export const CONTRACT_ABI = [
