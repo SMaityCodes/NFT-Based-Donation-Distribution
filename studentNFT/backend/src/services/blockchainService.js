@@ -4,7 +4,7 @@ const { CONTRACT_ADDRESS, CONTRACT_ABI } = require('../config/contract');
 class BlockchainService {
   constructor() {
     const rpcUrl = process.env.ETHEREUM_RPC_URL || process.env.RPC_URL || 'http://localhost:8545';
-    // console.log('BlockchainService: Connecting to blockchain with RPC URL:', rpcUrl);
+    console.log('BlockchainService: Connecting to blockchain with RPC URL:', rpcUrl);
     
     this.provider = new ethers.providers.JsonRpcProvider(rpcUrl);
     this.contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, this.provider);

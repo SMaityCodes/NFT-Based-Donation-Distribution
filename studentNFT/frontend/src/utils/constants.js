@@ -1,5 +1,5 @@
 // Replace with your actual contract address after deployment
-export const CONTRACT_ADDRESS = "0x10aa80b2b02f0da0ab6b40c99a2bd0f71c5adb67";
+export const CONTRACT_ADDRESS = "0xcabb3fef2bda9df7e7866b5199e452cf4cb973bd";
 
 // Replace with your contract's ABI
 export const CONTRACT_ABI = [

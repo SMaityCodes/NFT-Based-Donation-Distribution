@@ -178,9 +178,8 @@ const RegisterStudentMUI = () => {
         parseInt(standard),
         admissionLetter.hash // Use the hash from the backend response
       );
-      toast.loading("Transaction pending...", { id: 'registerTx' });
       await tx.wait();
-      toast.success("Student registered on blockchain!", { id: 'registerTx' });
+      toast.success("Student registered on blockchain!");
       console.log('Registration transaction confirmed.');
 
       // Only if blockchain registration succeeds, register in backend
@@ -218,7 +217,7 @@ const RegisterStudentMUI = () => {
       navigate('/student/profile');
     } catch (err) {
       console.error("Registration failed:", err);
-      toast.error(`Registration failed: ${err.reason || err.message}`, { id: 'registerTx' });
+      toast.error(`Registration failed: ${err.reason || err.message}`);
     } finally {
       setIsRegistering(false);
     }

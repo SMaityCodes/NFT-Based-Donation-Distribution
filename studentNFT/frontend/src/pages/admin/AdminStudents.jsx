@@ -309,7 +309,7 @@ const AdminStudents = () => {
     try {
       const tx = await contract.approveStudent(student.id);
       await tx.wait();
-      toast.success('Student approved successfully');
+      toast.success('Student approved successfully!');
       fetchStudents(); // Refresh the student list
     } catch (error) {
       console.error('Error approving student:', error);

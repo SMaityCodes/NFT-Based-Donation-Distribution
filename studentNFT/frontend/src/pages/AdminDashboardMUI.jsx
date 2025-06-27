@@ -18,7 +18,7 @@ const AdminDashboardMUI = () => {
 
   // Campaign Creation States
   const [campaignName, setCampaignName] = useState('');
-  const [allowedSchoolTypes, setAllowedSchoolTypes] = useState('');
+  const [allowedSchoolTypes, setAllowedSchoolTypes] = useState([]);
   const [selectedStandards, setSelectedStandards] = useState([]);
   const [creatingCampaign, setCreatingCampaign] = useState(false);
   const [campaignFormErrors, setCampaignFormErrors] = useState({});
@@ -217,8 +217,8 @@ const AdminDashboardMUI = () => {
     if (!campaignName) {
       newErrors.campaignName = "Campaign name is required.";
     }
-    if (!allowedSchoolTypes) {
-        newErrors.allowedSchoolTypes = "Allowed school types are required.";
+    if (allowedSchoolTypes.length === 0) {
+      newErrors.allowedSchoolTypes = "Allowed school types are required.";
     }
     if (selectedStandards.length === 0) {
       newErrors.selectedStandards = "At least one standard must be selected.";
@@ -232,20 +232,19 @@ const AdminDashboardMUI = () => {
     setCampaignFormErrors({});
     setCreatingCampaign(true);
     try {
-      const schoolTypesArray = allowedSchoolTypes.split(',').map(s => s.trim());
+      const schoolTypesArray = allowedSchoolTypes;
       const standardsIntArray = selectedStandards.map(s => parseInt(s));
 
       const tx = await contract.createCampaign(campaignName, schoolTypesArray, standardsIntArray);
-      toast.loading("Transaction pending...", { id: 'createCampaignTx' });
       await tx.wait();
-      toast.success("Campaign created successfully!", { id: 'createCampaignTx' });
+      toast.success("Campaign created successfully!");
       setCampaignName('');
-      setAllowedSchoolTypes('');
+      setAllowedSchoolTypes([]);
       setSelectedStandards([]);
       fetchData();
     } catch (err) {
       console.error("Create campaign failed:", err);
-      toast.error(`Create campaign failed: ${err.reason || err.message}`, { id: 'createCampaignTx' });
+      toast.error(`Create campaign failed: ${err.reason || err.message}`);
     } finally {
       setCreatingCampaign(false);
     }
@@ -274,14 +273,13 @@ const AdminDashboardMUI = () => {
     setRegisteringVendor(true);
     try {
       const tx = await contract.registerVendor(vendorAddress);
-      toast.loading("Transaction pending...", { id: 'registerVendorTx' });
       await tx.wait();
-      toast.success("Vendor registered successfully!", { id: 'registerVendorTx' });
+      toast.success("Vendor registered successfully!");
       setVendorAddress('');
       // In a real app, you'd probably fetch vendors from an indexer or event listener
     } catch (err) {
       console.error("Register vendor failed:", err);
-      toast.error(`Register vendor failed: ${err.reason || err.message}`, { id: 'registerVendorTx' });
+      toast.error(`Register vendor failed: ${err.reason || err.message}`);
     } finally {
       setRegisteringVendor(false);
     }
@@ -387,17 +385,15 @@ const AdminDashboardMUI = () => {
       const amount = ethers.parseEther(donationAmount);
       
       const tx = await contract.donateToCampaign(selectedCampaignForDonation.id, { value: amount });
-      toast.loading('Processing donation...', { id: 'donationTx' });
-      
       await tx.wait();
       
-      toast.success('Donation successful!', { id: 'donationTx' });
+      toast.success('Donation successful!');
       setOpenDonationDialog(false);
       setDonationAmount('');
       fetchData(); // Refresh campaign data
     } catch (err) {
       console.error('Donation error:', err);
-      toast.error(`Donation failed: ${err.reason || err.message}`, { id: 'donationTx' });
+      toast.error(`Donation failed: ${err.reason || err.message}`);
     } finally {
       setDonating(false);
     }
@@ -452,14 +448,29 @@ const AdminDashboardMUI = () => {
                 required
               />
               <TextField
-                label="Allowed School Types (comma-separated)"
-                value={allowedSchoolTypes}
-                onChange={(e) => setAllowedSchoolTypes(e.target.value)}
-                placeholder="e.g., govt, private, public"
-                helperText="Enter types like 'govt', 'private', etc., separated by commas."
-                error={!!campaignFormErrors.allowedSchoolTypes}
+                label="Allowed School Types"
                 required
-              />
+                error={!!campaignFormErrors.allowedSchoolTypes}
+                helperText={campaignFormErrors.allowedSchoolTypes}
+                InputLabelProps={{ shrink: true }}
+                select
+                SelectProps={{
+                  multiple: true,
+                  value: allowedSchoolTypes,
+                  onChange: (e) => setAllowedSchoolTypes(e.target.value),
+                  renderValue: (selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((value) => (
+                        <Chip key={value} label={value} />
+                      ))}
+                    </Box>
+                  ),
+                }}
+              >
+                <MenuItem value="Government">Government</MenuItem>
+                <MenuItem value="Private">Private</MenuItem>
+                <MenuItem value="International">International</MenuItem>
+              </TextField>
               <Select
                 multiple
                 value={selectedStandards}

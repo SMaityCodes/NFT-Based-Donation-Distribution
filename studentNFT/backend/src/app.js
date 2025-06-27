@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const path = require('path');
 const routes = require('./routes');
 const admissionLetterRoutes = require('./routes/admissionLetterRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use(express.urlencoded({ extended: true }));
 // app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use('/api', routes); // Mount routes under /api
+app.use('/api/auth', authRoutes);
 app.use('/api/admission-letters', admissionLetterRoutes);
 
 // Simple health check route

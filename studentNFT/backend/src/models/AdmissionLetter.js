@@ -17,7 +17,7 @@ const admissionLetterSchema = new mongoose.Schema({
   },
   filePath: {
     type: String,
-    required: true
+    default: null
   },
   fileUrl: {
     type: String,
