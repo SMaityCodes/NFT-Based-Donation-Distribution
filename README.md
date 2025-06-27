@@ -34,7 +34,7 @@ A decentralized platform that revolutionizes education funding through transpare
 
 ### Smart Contract (Solidity)
 - **Standard**: ERC-721 (NFT) with OpenZeppelin contracts
-- **Contract Name**: `CampaignNFT` (StudentFund3.sol)
+- **Contract Name**: `CampaignNFT` (Solidity/StudentFund.sol)
 - **Features**: 
   - Campaign creation and management
   - Student registration and approval
@@ -63,7 +63,7 @@ cd NFT-Based-Donation-Distribution
 ### 2. Backend Setup
 
 ```bash
-cd newStudentsNFT/backend
+cd studentNFT/backend
 
 # Install dependencies
 npm install
@@ -72,7 +72,21 @@ npm install
 cp .env.example .env
 ```
 
-Configure your `.env` file with your specific configuration values (such as MongoDB URI, JWT secret, etc.).
+Configure your `.env` file with the specific configuration values mentioned below.
+
+#### Change the Cloudinary Name, Api Key, Api Secret, Admin Private Key and Contract address with your actual Values
+
+```bash
+PORT=3001
+MONGODB_URI=mongodb://localhost:27017/nft-donation
+NODE_ENV=development
+CLOUDINARY_CLOUD_NAME=YOUR_CLOUDINARY_NAME
+CLOUDINARY_API_KEY=YOUR_CLOUDINARY_API_KEY
+CLOUDINARY_API_SECRET=YOUR_CLOUDINARY_API_SECRET
+ADMIN_PRIVATE_KEY= YOUR_WALLET_PRIVATE_KEY #Get it from Metamask
+CONTRACT_ADDRESS=YOUR_DEPLOYED_CONTRACT_ADDRESS 
+
+
 
 ### 3. Frontend Setup
 
@@ -86,19 +100,24 @@ npm install
 cp .env.example .env
 ```
 
-Configure your `.env` file with your specific configuration values (such as backend API URL, contract address, etc.).
+Configure your `.env` file with your specific configuration values.
+
+
+```bash
+CONTRACT_ADDRESS=YOUR_DEPLOYED_CONTRACT_ADDRESS 
+
 
 ### 4. Start the Application
 
 **Backend:**
 ```bash
-cd newStudentsNFT/backend
+cd studentNFT/backend
 npm run dev
 ```
 
 **Frontend:**
 ```bash
-cd newStudentsNFT/frontend
+cd studentsNFT/frontend
 npm run dev
 ```
 
@@ -136,7 +155,7 @@ The application will be available at:
 - View comprehensive donor statistics
 - Review and approve student documents
 
-## 🔧 Smart Contract Features (StudentFund3.sol)
+## 🔧 Smart Contract Features (StudentFund.sol)
 
 ### Campaign Management
 ```solidity
@@ -182,7 +201,7 @@ function approveVendor(address vendorAddress) external onlyOwner;
 
 ## 📄 Notes
 - All blockchain interactions are handled via the smart contract. 
-- Go to Remix and Save the StudentFund3.sol file from this repo, if you get a warning go to Solidity Compiler and click on Advanced Configuration then you will find a checkbox named Optimization, click it
+- Go to Remix and Save the StudentFund.sol file from this repo, if you get a warning go to Solidity Compiler and click on Advanced Configuration then you will find a checkbox named Optimization, click it
 - Now Go to Deploy and change the Environment to Injected Provider - Metamask
 - Deploy the contract then You will get a contract Address paste the contract address in the .env file
 
@@ -193,9 +212,9 @@ For questions or support, please open an issue or contact the project maintainer
 
 ```
 NFT-Based-Donation-Distribution/
-├── Practice/
-│   └── StudentFund3.sol          # Main smart contract (CampaignNFT)
-├── newStudentsNFT/
+├── Solidity/
+│   └── StudentFund.sol          # Main smart contract (CampaignNFT)
+├── studentNFT/
 │   ├── backend/
 │   │   ├── src/
 │   │   │   ├── config/          # Database and contract configuration
@@ -247,9 +266,8 @@ NFT-Based-Donation-Distribution/
 ## 🔗 Blockchain Integration
 
 ### Smart Contract Deployment
-1. Deploy the `Practice/StudentFund3.sol` contract to your preferred network
+1. Deploy the `Solidity/StudentFund.sol` contract to your preferred network
 2. Update contract configuration in environment variables
-3. Set up IPFS metadata templates for different educational standards
 
 ### Web3 Integration
 - Frontend uses Ethers.js for blockchain interaction
