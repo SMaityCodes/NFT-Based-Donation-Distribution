@@ -85,7 +85,7 @@ CLOUDINARY_API_KEY=YOUR_CLOUDINARY_API_KEY
 CLOUDINARY_API_SECRET=YOUR_CLOUDINARY_API_SECRET
 ADMIN_PRIVATE_KEY= YOUR_WALLET_PRIVATE_KEY #Get it from Metamask
 CONTRACT_ADDRESS=YOUR_DEPLOYED_CONTRACT_ADDRESS 
-
+```
 
 
 ### 3. Frontend Setup
@@ -105,7 +105,7 @@ Configure your `.env` file with your specific configuration values.
 
 ```bash
 CONTRACT_ADDRESS=YOUR_DEPLOYED_CONTRACT_ADDRESS 
-
+```
 
 ### 4. Start the Application
 
