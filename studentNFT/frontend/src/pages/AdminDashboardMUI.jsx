@@ -720,9 +720,6 @@ const AdminDashboardMUI = () => {
             </VStack>
           </Paper>
           <Divider sx={{ my: 4 }} />
-          <Typography variant="body1" color="text.secondary">
-            Registered Vendors will be displayed here (requires off-chain indexing or a contract function to get all vendors).
-          </Typography>
         </Box>
       )}
 
