@@ -1,6 +1,5 @@
 const Student = require("../models/Student");
 const NFTMetadata = require("../models/NFTMetadata");
-const blockchainService = require("../services/blockchainService");
 const { ethers } = require("ethers");
 const { CONTRACT_ADDRESS, CONTRACT_ABI } = require("../config/contract");
 
