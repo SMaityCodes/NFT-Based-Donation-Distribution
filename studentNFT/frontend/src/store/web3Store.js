@@ -57,7 +57,7 @@ const useWeb3Store = create((set, get) => ({
         loading: false,
       });
 
-      toast.success('Wallet connected successfully!');
+      // toast.success('Wallet connected successfully!');
 
       // Listen for account changes
       window.ethereum.on('accountsChanged', (newAccounts) => {
