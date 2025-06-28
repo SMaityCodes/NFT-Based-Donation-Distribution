@@ -265,13 +265,13 @@ const RegisterStudentMUI = () => {
   return (
     <Box sx={{ p: 4 }}>
       {/* Debug Panel */}
-      <Paper sx={{ p: 2, mb: 2, background: '#f5f5f5', color: '#333' }}>
+      {/* <Paper sx={{ p: 2, mb: 2, background: '#f5f5f5', color: '#333' }}>
         <Typography variant="subtitle2">[Debug] Connection State</Typography>
         <Typography variant="body2">isConnected: {JSON.stringify(isConnected)}</Typography>
         <Typography variant="body2">account: {account || 'N/A'}</Typography>
         <Typography variant="body2">signer: {signer ? 'Loaded' : 'Not loaded'}</Typography>
         <Typography variant="body2">contract: {contract ? 'Loaded' : 'Not loaded'}</Typography>
-      </Paper>
+      </Paper> */}
       <Typography variant="h4" component="h1" gutterBottom textAlign="center">
         Register Student for Campaign
       </Typography>

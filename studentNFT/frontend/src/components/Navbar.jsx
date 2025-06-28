@@ -230,10 +230,10 @@ const Navbar = ({ toggleTheme, isDarkMode }) => {
           </Button>
           <Button
             color="inherit"
-            startIcon={<PersonIcon />}
+            startIcon={<DashboardIcon />}
             onClick={() => handleNavigation("/student/profile")}
           >
-            Profile
+            Dashboard
           </Button>
         </>
       );
@@ -256,12 +256,26 @@ const Navbar = ({ toggleTheme, isDarkMode }) => {
           >
             Campaigns
           </Button>
+          <Button
+            color="inherit"
+            startIcon={<DonateIcon />}
+            onClick={() => handleNavigation("/donate")}
+          >
+            Your Donations
+          </Button>
         </>
       );
     }
 
     return (
       <>
+        <Button
+          color="inherit"
+          startIcon={<CampaignIcon />}
+          onClick={() => handleNavigation("/vendor/campaigns")}
+        >
+          Campaigns
+        </Button>
         <Button
           color="inherit"
           startIcon={<RegisterIcon />}
@@ -274,7 +288,7 @@ const Navbar = ({ toggleTheme, isDarkMode }) => {
           startIcon={<DonateIcon />}
           onClick={() => handleNavigation("/donate")}
         >
-          Become a Donor
+          Your Donations
         </Button>
       </>
     );

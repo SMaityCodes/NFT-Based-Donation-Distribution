@@ -68,35 +68,6 @@ const CampaignDetailMUI = () => {
     fetchCampaignData();
   }, [id, contract, getReadOnlyContract]);
 
-  const handleDonate = async () => {
-    setDonationError(null);
-    if (!isConnected || !signer || !contract) {
-      toast.error("Please connect your wallet.");
-      return;
-    }
-    const amount = parseFloat(donationAmount);
-    if (isNaN(amount) || amount <= 0) {
-      setDonationError("Please enter a valid positive amount.");
-      return;
-    }
-
-    setDonating(true);
-    try {
-      const amountInWei = ethers.parseEther(donationAmount);
-      const tx = await contract.donateToCampaign(campaignId, { value: amountInWei });
-      toast.loading("Transaction pending...", { id: 'donateTx' });
-      await tx.wait();
-      toast.success("Donation successful!", { id: 'donateTx' });
-      setDonationAmount('');
-      fetchCampaignData(); // Refresh data
-    } catch (err) {
-      console.error("Donation failed:", err);
-      setDonationError(err.reason || err.message);
-      toast.error(`Donation failed: ${err.reason || err.message}`, { id: 'donateTx' });
-    } finally {
-      setDonating(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -137,48 +108,8 @@ const CampaignDetailMUI = () => {
                     </Typography>
                 )}
             </Grid>
-            {/* <Grid item xs={12}>
-                <Typography variant="body1" component="span"><strong>Allowed School Types:</strong>{' '}</Typography>
-                <Box component="span">
-                  {(campaign.allowedSchoolTypes || []).map((type, idx) => (
-                      <Chip key={idx} label={type} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
-                  ))}
-                </Box>
-            </Grid>
-            <Grid item xs={12}>
-                <Typography variant="body1" component="span"><strong>Allowed Standards:</strong>{' '}</Typography>
-                <Box component="span">
-                  {(campaign.allowedStandards || []).map(s => (
-                      <Chip key={s} label={STANDARDS[s]} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
-                  ))}
-                </Box>
-            </Grid> */}
         </Grid>
       </Paper>
-
-      {/* <VStack spacing={3} sx={{ mt: 4 }}>
-        <Typography variant="h5" gutterBottom>Make a Donation</Typography>
-        <TextField
-          label="Amount (ETH)"
-          type="number"
-          placeholder="e.g., 0.1"
-          value={donationAmount}
-          onChange={(e) => setDonationAmount(e.target.value)}
-          error={!!donationError}
-          helperText={donationError}
-          fullWidth
-        />
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={handleDonate}
-          disabled={!isConnected || donating || !donationAmount || parseFloat(donationAmount) <= 0}
-          startIcon={donating && <CircularProgress size={20} color="inherit" />}
-          fullWidth
-        >
-          Donate
-        </Button>
-      </VStack> */}
 
       <Box sx={{ mt: 6 }}>
         <Typography variant="h5" gutterBottom>Donors to this Campaign</Typography>

@@ -404,9 +404,6 @@ const AdminDashboardMUI = () => {
       <Box sx={{ p: 4, mt: 4, textAlign: 'center', color: 'error.main' }}>
         <Typography variant="h4" component="h2" gutterBottom>Access Denied!</Typography>
         <Typography variant="body1" mt={2}>You must be the contract owner to access this dashboard.</Typography>
-        <Button variant="contained" color="primary" sx={{ mt: 3 }} onClick={useWeb3Store.getState().connectWallet}>
-          Connect Wallet
-        </Button>
       </Box>
     );
   }

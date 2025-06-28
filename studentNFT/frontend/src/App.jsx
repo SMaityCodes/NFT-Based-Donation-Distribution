@@ -6,6 +6,7 @@ import {useTheme, ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import {BrowserRouter as Router } from 'react-router-dom';
+import WalletListener from './components/WalletListener';
 
 // Separate component to use hooks
 const AppContent = () => {
@@ -13,6 +14,7 @@ const AppContent = () => {
   
   return (
     <>
+      <WalletListener />
       <Navbar 
         toggleTheme={toggleTheme} 
         isDarkMode={isDarkMode} 

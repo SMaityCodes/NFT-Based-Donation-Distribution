@@ -12,6 +12,7 @@ const useWeb3Store = create((set, get) => ({
   isAdmin: false,
   isStudent: false,
   isVendor: false,
+  isDonor: false,
   loading: false,
   error: null,
 
@@ -52,6 +53,7 @@ const useWeb3Store = create((set, get) => ({
         isAdmin,
         isStudent,
         isVendor,
+        isDonor: !isOwner && !isAdmin && !isStudent && !isVendor,
         loading: false,
       });
 

@@ -48,9 +48,11 @@ import {
 import { useTheme } from '@mui/material/styles';
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from '../utils/constants';
 import { ethers } from 'ethers';
+import { useNavigate } from 'react-router-dom';
 
 const DonorDashboard = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
   const [campaigns, setCampaigns] = useState([]);
   const [donations, setDonations] = useState([]);
@@ -93,26 +95,10 @@ const DonorDashboard = () => {
         if (accounts.length > 0) {
           setWalletConnected(true);
           setCurrentAccount(accounts[0].address);
-          setMessage('Wallet connected successfully!');
         } else {
           setWalletConnected(false);
           setCurrentAccount(null);
-          setMessage('Please connect your wallet to start donating.');
         }
-
-        // Listen for account changes
-        window.ethereum.on('accountsChanged', (newAccounts) => {
-          if (newAccounts.length > 0) {
-            setCurrentAccount(newAccounts[0]);
-            setWalletConnected(true);
-            setMessage('Wallet account changed.');
-          } else {
-            setCurrentAccount(null);
-            setWalletConnected(false);
-            setMessage('Wallet disconnected. Please reconnect.');
-          }
-        });
-
       } catch (error) {
         console.error("Error checking wallet connection:", error);
         setMessage("Error checking wallet connection. Please ensure MetaMask is installed.");
@@ -138,7 +124,7 @@ const DonorDashboard = () => {
       if (accounts.length > 0) {
         setWalletConnected(true);
         setCurrentAccount(accounts[0]);
-        setMessage('Wallet connected successfully!');
+        // setMessage('Wallet connected successfully!');
       } else {
         setMessage('No accounts found. Please connect an account in your wallet.');
       }
@@ -326,7 +312,7 @@ const DonorDashboard = () => {
           Donor Dashboard
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Welcome back! Manage your donations and explore campaigns.
+          Welcome! Manage your donations and explore campaigns.
         </Typography>
       </Box>
 
