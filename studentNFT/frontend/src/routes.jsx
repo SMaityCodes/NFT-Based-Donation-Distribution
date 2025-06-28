@@ -17,12 +17,10 @@ import RegisterStudentMUI from "./pages/RegisterStudentMUI";
 
 // Vendor Pages
 import VendorDashboard from "./pages/vendor/VendorDashboard";
-import VendorTransactions from "./pages/vendor/VendorTransactions";
 
 // Public Pages
 import CampaignDetailMUI from "./pages/CampaignDetailMUI";
 import MyNFTsMUI from "./pages/MyNFTsMUI";
-import ViewFunctions from "./pages/ViewFunctions";
 import VendorCampaigns from "./pages/vendor/VendorCampaigns";
 import StandardTokenURI from "./pages/StandardTokenURI";
 import DonorDashboard from "./pages/DonorDashboard";
@@ -100,14 +98,10 @@ const AppRoutes = () => {
 
           {/* Vendor Routes */}
           <Route path="/vendor/dashboard" element={<VendorDashboard />} />
-          <Route path="/vendor/transactions" element={<VendorTransactions />} />
           <Route path="/vendor/campaigns" element={<VendorCampaigns />} />
 
           {/* NFT Routes */}
           <Route path="/my-nfts" element={<MyNFTsMUI />} />
-
-          {/* View Functions Route */}
-          <Route path="/view-functions" element={<ViewFunctions />} />
 
           {/* Token URI by Standard Route */}
           <Route path="/token-uri/:standard" element={<StandardTokenURI />} />

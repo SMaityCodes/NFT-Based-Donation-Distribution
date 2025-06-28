@@ -276,7 +276,40 @@ NFT-Based-Donation-Distribution/
 - MetaMask integration for wallet connectivity
 - Real-time donation tracking and NFT management
 
+## 📸 Screenshots
 
+### 🏠 First View of the Website
+![Home Page](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106980/Home_Page_vulylb.png)
+
+### 👤 User Page after Registration
+![Registered Homepage](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106982/Registered_Homepage_hk6msg.png)
+
+---
+
+### 🛠️ Admin Pages
+![Admin Dashboard](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106988/Admin_Dashboard_polyg4.png)  
+![Admin Dashboard - Campaign View](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106989/Admin_Dashboard_2_adtrrw.png)  
+![Admin Financial Overview](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106988/Admin_Financial_Overview_wvkbuj.png)  
+![Admin Student Approvals](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106987/Admin_Student_Approvals_gplt6t.png)  
+![Admin Campaigns](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106987/Admin_Campaigns_smztat.png)  
+![Admin Student Management](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106985/Admin_Student_Management_wowue7.png)  
+![Admin Vendor Management](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106984/Admin_Vendor_Management_yndpze.png)
+
+---
+
+### 🎓 Student Pages
+![Student Dashboard](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106985/Student_Dashboard_x25gfa.png)  
+![Student Campaigns](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106985/Student_Campaigns_snakkr.png)
+
+---
+
+### 🏬 Vendor Page
+![Vendor Dashboard](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106984/Vendor_Dashboard_mekfjs.png)
+
+---
+
+### 💰 Donor Page
+![Donor Dashboard](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106982/Donar_Dashboard_nqno5r.png)
 
 
 ## 🎓 Educational Standards & Funding

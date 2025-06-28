@@ -74,9 +74,9 @@ const StandardTokenURI = () => {
           <Typography color="error">{error}</Typography>
         ) : (
           <>
-            <Typography variant="body1" sx={{ mb: 2 }}>
+            {/* <Typography variant="body1" sx={{ mb: 2 }}>
               <strong>Token URI Template:</strong> {tokenURI}
-            </Typography>
+            </Typography> */}
             <Typography variant="body1" sx={{ mb: 2 }}>
               <strong>Amount for this Standard:</strong> {amount}
             </Typography>
