@@ -278,39 +278,28 @@ NFT-Based-Donation-Distribution/
 
 ## 📸 Screenshots
 
-### 🏠 First View of the Website
-![Home Page](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106980/Home_Page_vulylb.png)
+### 🏠 Home & Registration
+- [Home Page](https://github.com/SMaityCodes/NFT-Based-Donation-Distribution/blob/main/Media/Home%20Page.png)
+- [Registered Homepage](https://github.com/SMaityCodes/NFT-Based-Donation-Distribution/blob/main/Media/Registered%20Homepage.png)
 
-### 👤 User Page after Registration
-![Registered Homepage](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106982/Registered_Homepage_hk6msg.png)
+### 👨‍💼 Admin Dashboard & Management
+- [Admin Dashboard](https://github.com/SMaityCodes/NFT-Based-Donation-Distribution/blob/main/Media/Admin%20Dashboard.png)
+- [Admin Dashbboard 2](https://github.com/SMaityCodes/NFT-Based-Donation-Distribution/blob/main/Media/Admin%20Dashboard%202.png)
+- [Admin Financial Overview](https://github.com/SMaityCodes/NFT-Based-Donation-Distribution/blob/main/Media/Admin%20Financial%20Overview.png)
+- [Admin Student Approvals](https://github.com/SMaityCodes/NFT-Based-Donation-Distribution/blob/main/Media/Admin%20Student%20Approvals.png)
+- [Admin Campaigns](https://github.com/SMaityCodes/NFT-Based-Donation-Distribution/blob/main/Media/Admin%20Campaigns.png)
+- [Admin Student Management](https://github.com/SMaityCodes/NFT-Based-Donation-Distribution/blob/main/Media/Admin%20Student%20Management.png)
+- [Admin Vendor Management](https://github.com/SMaityCodes/NFT-Based-Donation-Distribution/blob/main/Media/Admin%20Vendor%20Management.png)
 
----
+### 🎓 Student Interface
+- [Student Dashboard](https://github.com/SMaityCodes/NFT-Based-Donation-Distribution/blob/main/Media/Student%20Dashboard.png)
+- [Student Campaigns](https://github.com/SMaityCodes/NFT-Based-Donation-Distribution/blob/main/Media/Student%20Campaigns.png)
 
-### 🛠️ Admin Pages
-![Admin Dashboard](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106988/Admin_Dashboard_polyg4.png)  
-![Admin Dashboard - Campaign View](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106989/Admin_Dashboard_2_adtrrw.png)  
-![Admin Financial Overview](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106988/Admin_Financial_Overview_wvkbuj.png)  
-![Admin Student Approvals](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106987/Admin_Student_Approvals_gplt6t.png)  
-![Admin Campaigns](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106987/Admin_Campaigns_smztat.png)  
-![Admin Student Management](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106985/Admin_Student_Management_wowue7.png)  
-![Admin Vendor Management](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106984/Admin_Vendor_Management_yndpze.png)
+### 🏪 Vendor Interface
+- [Vendor Dashboard](https://github.com/SMaityCodes/NFT-Based-Donation-Distribution/blob/main/Media/Vendor%20Dashboard.png)
 
----
-
-### 🎓 Student Pages
-![Student Dashboard](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106985/Student_Dashboard_x25gfa.png)  
-![Student Campaigns](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106985/Student_Campaigns_snakkr.png)
-
----
-
-### 🏬 Vendor Page
-![Vendor Dashboard](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106984/Vendor_Dashboard_mekfjs.png)
-
----
-
-### 💰 Donor Page
-![Donor Dashboard](https://res.cloudinary.com/drd5i2llh/image/upload/v1751106982/Donar_Dashboard_nqno5r.png)
-
+### 💰 Donor Interface
+- [Donor Dashboard](https://github.com/SMaityCodes/NFT-Based-Donation-Distribution/blob/main/Media/Donar%20Dashboard.png)
 
 ## 🎓 Educational Standards & Funding
 
