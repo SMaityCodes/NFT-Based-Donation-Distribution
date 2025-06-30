@@ -301,6 +301,11 @@ NFT-Based-Donation-Distribution/
 ### 💰 Donor Interface
 - [Donor Dashboard](https://github.com/SMaityCodes/NFT-Based-Donation-Distribution/blob/main/Media/Donar%20Dashboard.png)
 
+## Video Explanation of the Website and Smart Contract
+
+- [Video Explanation of the Project](https://drive.google.com/file/d/1ErntHhhTj5bwAh2MKjmnDpD73omC90my/view?usp=sharing)
+
+
 ## 🎓 Educational Standards & Funding
 
 The system supports multiple educational standards with predefined funding amounts:
